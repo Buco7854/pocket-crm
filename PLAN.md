@@ -2,9 +2,9 @@
 
 ## Contexte
 
-Projet d'etudes : CRM web. Le repertoire `pocket-crm` est vide, tout est a construire from scratch. Ce document sert de tracker de progression — cocher `[x]` au fur et a mesure.
+Projet d'etudes : CRM web. Ce document sert de tracker de progression — cocher `[x]` au fur et a mesure.
 
-**Stack** : Vue.js 3 (Composition API) + **TypeScript** + Tailwind CSS + Vite | PocketBase **en tant que framework Go** (binaire custom) | Docker | **i18n FR/EN** (vue-i18n)
+**Stack** : React 19 + TypeScript + Tailwind CSS 4 + Vite 7 | Zustand (state) | React Router v7 | react-i18next (i18n FR/EN) | lucide-react (icons) | PocketBase **en tant que framework Go** (binaire custom) | Docker
 
 **IMPORTANT** : Mettre a jour ce fichier en cochant `[x]` apres chaque tache realisee.
 
@@ -32,31 +32,31 @@ pocket-crm/
 │
 └── frontend/
     ├── Dockerfile / nginx.conf
-    ├── package.json / vite.config.ts / tailwind.config.ts / tsconfig.json / tsconfig.app.json
+    ├── package.json / vite.config.ts / tsconfig.json / tsconfig.app.json
     └── src/
-        ├── main.ts / App.vue
-        ├── env.d.ts                      # Types environnement Vite
-        ├── router/index.ts
+        ├── main.tsx / App.tsx
+        ├── router/index.tsx              # React Router v7 (createBrowserRouter)
         ├── lib/pocketbase.ts             # SDK singleton type
         ├── types/
         │   ├── models.ts                 # Interfaces TS (User, Contact, Company, Lead, Task, etc.)
         │   └── pocketbase.ts             # Types expand PocketBase
         ├── i18n/
-        │   ├── index.ts                  # Config vue-i18n
+        │   ├── index.ts                  # Config react-i18next
         │   ├── fr.json                   # Traductions francaises
         │   └── en.json                   # Traductions anglaises
-        ├── stores/                       # Pinia (auth, contacts, companies, leads, tasks, dashboard)
-        ├── composables/                  # useAuth, useContacts, useCompanies, useLeads, useTasks, useDashboard, useI18n
+        ├── store/
+        │   └── authStore.ts              # Zustand auth store
+        ├── hooks/                        # useAuth, useTheme, useCollection, etc.
         ├── components/
-        │   ├── layout/   (AppLayout, AppSidebar, AppTopbar, AppBreadcrumb, LocaleSwitcher)
-        │   ├── ui/       (BaseButton, BaseInput, BaseSelect, BaseModal, BaseTable, BaseCard, BaseBadge, BaseAlert, BasePagination, BaseSearchFilter)
+        │   ├── layout/   (AppLayout, AppSidebar, AppTopbar, AppBreadcrumb, ThemeSwitcher, LocaleSwitcher)
+        │   ├── ui/       (Button, Input, Select, Modal, Table, Card, Badge, Alert, Pagination, SearchFilter)
         │   ├── contacts/ (ContactList, ContactForm, ContactDetail)
         │   ├── companies/(CompanyList, CompanyForm, CompanyDetail)
         │   ├── leads/    (LeadList, LeadForm, LeadDetail, PipelineBoard)
         │   ├── tasks/    (TaskList, TaskForm, TaskCalendar, TaskReminder)
         │   ├── dashboard/(KpiCard, RevenueChart, ConversionFunnel, ActivityFeed)
         │   └── email/    (EmailTemplateEditor, EmailCampaignList)
-        └── views/         (Login, Register, Dashboard, Contacts, Companies, Leads, Pipeline, Tasks, Email, Settings)
+        └── pages/        (LoginPage, RegisterPage, DashboardPage, ContactsPage, CompaniesPage, LeadsPage, PipelinePage, TasksPage, EmailPage, SettingsPage)
 ```
 
 ---
@@ -149,22 +149,21 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [x] 1.6 — Ecrire `backend/main.go` : importer PocketBase comme framework, initialiser l'app PB, demarrer le serveur
 - [x] 1.7 — Creer les dossiers `backend/hooks/`, `backend/services/`, `backend/pb_migrations/`
 - [x] 1.8 — Ecrire `backend/Dockerfile` : multi-stage (golang:1.24-alpine build + alpine run), expose port 8090
-- [x] 1.9 — **Frontend Vue 3 + TS** : `npm create vite@latest frontend -- --template vue-ts`
+- [x] 1.9 — **Frontend React 19 + TS** : scaffolded avec Vite 7 (`@vitejs/plugin-react`)
 - [x] 1.10 — `cd frontend && npm install`
-- [x] 1.11 — Installer Tailwind CSS (`tailwindcss @tailwindcss/vite`) + config
-- [x] 1.12 — Configurer directives Tailwind dans `src/style.css`
-- [x] 1.13 — Installer ESLint + Prettier + config `.eslintrc.cjs`
-- [x] 1.14 — Installer PocketBase JS SDK : `npm install pocketbase`
-- [x] 1.15 — Installer Pinia : `npm install pinia`
-- [x] 1.16 — Installer Vue Router : `npm install vue-router@4`
-- [x] 1.17 — Installer vue-i18n : `npm install vue-i18n@next`
-- [x] 1.18 — Configurer `tsconfig.app.json` (paths aliases `@/` -> `src/`, strict mode)
-- [x] 1.19 — Creer `src/env.d.ts` pour les types d'environnement Vite
-- [x] 1.20 — Ecrire `docker-compose.yml` (services pocketbase + frontend, ports, volumes)
-- [x] 1.21 — Configurer `vite.config.ts` (proxy /api -> pocketbase:8090, alias @/)
-- [x] 1.22 — Verifier : `docker-compose up`, PocketBase Admin sur :8090/_/, Vue dev sur :3000
-- [x] 1.23 — Creer superuser PocketBase via CLI
-- [x] 1.24 — Commit initial
+- [x] 1.11 — Installer Tailwind CSS 4 (`tailwindcss @tailwindcss/vite`) + config
+- [x] 1.12 — Configurer Tailwind dans `src/style.css` (CSS custom properties, theme tokens)
+- [x] 1.13 — Installer PocketBase JS SDK : `npm install pocketbase`
+- [x] 1.14 — Installer Zustand : `npm install zustand`
+- [x] 1.15 — Installer React Router : `npm install react-router-dom`
+- [x] 1.16 — Installer react-i18next : `npm install react-i18next i18next`
+- [x] 1.17 — Installer lucide-react : `npm install lucide-react`
+- [x] 1.18 — Configurer `tsconfig.app.json` (paths aliases `@/` -> `src/`, jsx: react-jsx, strict mode)
+- [x] 1.19 — Ecrire `docker-compose.yml` (services pocketbase + frontend, ports, volumes)
+- [x] 1.20 — Configurer `vite.config.ts` (proxy /api et /_ -> pocketbase:8090, alias @/)
+- [x] 1.21 — Verifier : PocketBase Admin sur :8090/_/, React dev sur :3000
+- [x] 1.22 — Creer superuser PocketBase via CLI
+- [x] 1.23 — Commit initial
 
 ---
 
@@ -199,108 +198,104 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [x] 3.1 — Creer `src/types/models.ts` : interfaces TS pour toutes les entites
 - [x] 3.2 — Creer `src/types/pocketbase.ts` : types expand PB, ListResult, RecordModel
 - [x] 3.3 — Creer `src/lib/pocketbase.ts` : singleton SDK type
-- [x] 3.4 — Configurer Pinia dans `main.ts`
-- [x] 3.5 — Configurer i18n dans `src/i18n/index.ts`
+- [x] 3.4 — Configurer Zustand store dans `src/store/authStore.ts`
+- [x] 3.5 — Configurer i18n dans `src/i18n/index.ts` (react-i18next)
 - [x] 3.6 — Creer `src/i18n/fr.json` : traductions francaises
 - [x] 3.7 — Creer `src/i18n/en.json` : traductions anglaises
-- [x] 3.8 — Enregistrer vue-i18n dans `main.ts`
+- [x] 3.8 — Enregistrer I18nextProvider dans `main.tsx`
 
 ### 3B — Layout et Navigation
-- [x] 3.9 — Configurer Vue Router (`router/index.ts`) avec types RouteMeta
-- [x] 3.10 — `AppLayout.vue` : sidebar + topbar + router-view
-- [x] 3.11 — `AppSidebar.vue` : navigation i18n + visibilite par role
-- [x] 3.12 — `AppTopbar.vue` : breadcrumb, search, user dropdown
-- [x] 3.13 — `LocaleSwitcher.vue` : basculer FR/EN
-- [x] 3.14 — `AppBreadcrumb.vue`
+- [x] 3.9 — Configurer React Router (`router/index.tsx`) avec createBrowserRouter, route guards (RequireAuth, RequireGuest, RequireRole)
+- [x] 3.10 — `AppLayout.tsx` : sidebar + topbar + Outlet
+- [x] 3.11 — `AppSidebar.tsx` : navigation i18n + visibilite par role (lucide-react icons)
+- [x] 3.12 — `AppTopbar.tsx` : breadcrumb, search, user dropdown
+- [x] 3.13 — `ThemeSwitcher.tsx` : dropdown Light/Dark/System
+- [x] 3.14 — `LocaleSwitcher.tsx` : dropdown FR/EN
+- [x] 3.15 — `AppBreadcrumb.tsx` : useMatches() + handle.breadcrumb
 
 ### 3C — Composants UI reutilisables
-- [x] 3.15 — `BaseButton.vue`
-- [x] 3.16 — `BaseInput.vue`
-- [x] 3.17 — `BaseSelect.vue`
-- [x] 3.18 — `BaseModal.vue`
-- [x] 3.19 — `BaseTable.vue`
-- [x] 3.20 — `BaseCard.vue`
-- [x] 3.21 — `BaseBadge.vue`
-- [x] 3.22 — `BaseAlert.vue`
-- [x] 3.23 — `BasePagination.vue`
-- [x] 3.24 — `BaseSearchFilter.vue`
+- [x] 3.16 — `Button.tsx`
+- [x] 3.17 — `Input.tsx`
+- [x] 3.18 — `Select.tsx`
+- [x] 3.19 — `Modal.tsx` (createPortal)
+- [x] 3.20 — `Table.tsx`
+- [x] 3.21 — `Card.tsx`
+- [x] 3.22 — `Badge.tsx`
+- [x] 3.23 — `Alert.tsx`
+- [x] 3.24 — `Pagination.tsx`
+- [x] 3.25 — `SearchFilter.tsx`
 
 ### 3D — Theme et structure
-- [x] 3.25 — Theme Tailwind (couleurs CRM + pipeline)
-- [x] 3.26 — Stub views pour toutes les routes
-- [x] 3.27 — Wirer `App.vue` : AppLayout / layout nu
-- [x] 3.28 — Verifier navigation, responsive, switch FR/EN
-- [x] 3.29 — Commit
+- [x] 3.26 — Theme CSS custom properties (couleurs CRM + pipeline + dark mode classic gray)
+- [x] 3.27 — Stub pages pour toutes les routes (React.lazy + Suspense)
+- [x] 3.28 — Wirer `App.tsx` : RouterProvider
+- [x] 3.29 — Verifier navigation, responsive, switch FR/EN, switch theme
+- [x] 3.30 — Commit
 
 ---
 
 ## Phase 4 : Auth & Integration API
 
-- [x] 4.1 — `stores/auth.ts` : state, computed, actions
+- [x] 4.1 — `store/authStore.ts` : state, derived (isAuthenticated, userRole, isAdmin, isCommercial, userInitials), actions
 - [x] 4.2 — Implementer `login()`
 - [x] 4.3 — Implementer `register()`
 - [x] 4.4 — Implementer `logout()`
-- [x] 4.5 — Persistance auth
-- [x] 4.6 — `LoginView.vue`
-- [x] 4.7 — `RegisterView.vue`
-- [x] 4.8 — Navigation guard `router.beforeEach()`
-- [x] 4.9 — Composable `useAuth.ts`
+- [x] 4.5 — Persistance auth (pb.authStore.onChange listener dans Zustand init)
+- [x] 4.6 — `LoginPage.tsx`
+- [x] 4.7 — `RegisterPage.tsx`
+- [x] 4.8 — Route guards : RequireAuth, RequireGuest, RequireRole (wrapper components)
+- [x] 4.9 — Hook `useAuth.ts` (wraps Zustand + useNavigate)
 - [x] 4.10 — Mettre a jour Sidebar/Topbar avec role
-- [x] 4.11 — Composable generique `useCollection.ts`
+- [x] 4.11 — Hook generique `useCollection.ts` (CRUD PocketBase)
 - [x] 4.12 — Intercepteur erreurs SDK 401
 - [x] 4.13 — Tester le flow complet auth
 - [x] 4.14 — Commit
 
 ---
 
-## Phase 5 : Vues Metier
+## Phase 5 : Pages Metier
 
 ### 5A — Contacts
-- [ ] 5.1 — `stores/contacts.ts`
-- [ ] 5.2 — `composables/useContacts.ts`
-- [ ] 5.3 — `ContactList.vue`
-- [ ] 5.4 — `ContactForm.vue`
-- [ ] 5.5 — `ContactDetail.vue`
-- [ ] 5.6 — `ContactsView.vue`
+- [x] 5.1 — Hook `useContacts.ts`
+- [x] 5.2 — `ContactList.tsx`
+- [x] 5.3 — `ContactForm.tsx`
+- [x] 5.4 — `ContactDetail.tsx`
+- [x] 5.5 — `ContactsPage.tsx` — integration complete
 
 ### 5B — Entreprises
-- [ ] 5.7 — `stores/companies.ts`
-- [ ] 5.8 — `composables/useCompanies.ts`
-- [ ] 5.9 — `CompanyList.vue`
-- [ ] 5.10 — `CompanyForm.vue`
-- [ ] 5.11 — `CompanyDetail.vue`
-- [ ] 5.12 — `CompaniesView.vue`
+- [x] 5.6 — Hook `useCompanies.ts`
+- [x] 5.7 — `CompanyList.tsx`
+- [x] 5.8 — `CompanyForm.tsx`
+- [x] 5.9 — `CompanyDetail.tsx`
+- [x] 5.10 — `CompaniesPage.tsx`
 
 ### 5C — Taches
-- [ ] 5.13 — `stores/tasks.ts`
-- [ ] 5.14 — `composables/useTasks.ts`
-- [ ] 5.15 — `TaskList.vue`
-- [ ] 5.16 — `TaskForm.vue`
-- [ ] 5.17 — `TaskCalendar.vue`
-- [ ] 5.18 — `TaskReminder.vue`
-- [ ] 5.19 — `TasksView.vue`
+- [x] 5.11 — Hook `useTasks.ts`
+- [x] 5.12 — `TaskList.tsx`
+- [x] 5.13 — `TaskForm.tsx`
+- [x] 5.14 — `TaskDetail.tsx`
+- [x] 5.15 — `TasksPage.tsx`
 
 ### 5D — Leads & Pipeline
-- [ ] 5.20 — `stores/leads.ts`
-- [ ] 5.21 — `composables/useLeads.ts`
-- [ ] 5.22 — `LeadList.vue`
-- [ ] 5.23 — `LeadForm.vue`
-- [ ] 5.24 — `LeadDetail.vue`
-- [ ] 5.25 — `PipelineBoard.vue` (Kanban drag-and-drop)
-- [ ] 5.26 — `LeadsView.vue`
-- [ ] 5.27 — `PipelineView.vue`
-- [ ] 5.28 — Realtime PocketBase sur leads
-- [ ] 5.29 — Tester tous les CRUD, expands, roles, i18n
-- [ ] 5.30 — Commit
+- [x] 5.16 — Hook `useLeads.ts`
+- [x] 5.17 — `LeadList.tsx`
+- [x] 5.18 — `LeadForm.tsx`
+- [x] 5.19 — `LeadDetail.tsx`
+- [x] 5.20 — `PipelineBoard.tsx` (Kanban drag-and-drop HTML5 natif)
+- [x] 5.21 — `LeadsPage.tsx`
+- [x] 5.22 — `PipelinePage.tsx`
+- [ ] 5.23 — Realtime PocketBase sur leads
+- [ ] 5.24 — Tester tous les CRUD, expands, roles, i18n
+- [ ] 5.25 — Commit
 
 ---
 
 ## Phase 6 : Automatisation Email
 
 - [ ] 6.1 — Configurer SMTP dans PocketBase Admin
-- [ ] 6.2 — `EmailTemplateEditor.vue`
-- [ ] 6.3 — `EmailCampaignList.vue`
-- [ ] 6.4 — `EmailView.vue` (onglets Modeles + Historique)
+- [ ] 6.2 — `EmailTemplateEditor.tsx`
+- [ ] 6.3 — `EmailCampaignList.tsx`
+- [ ] 6.4 — `EmailPage.tsx` (onglets Modeles + Historique)
 - [ ] 6.5 — Bouton "Envoyer Email" sur ContactDetail
 - [ ] 6.6 — Action frontend appel route custom
 - [ ] 6.7 — **Go** `backend/hooks/email.go` : route POST /api/crm/send-email
@@ -316,20 +311,19 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 
 ## Phase 7 : Dashboard Analytique
 
-- [ ] 7.1 — Installer chart.js + vue-chartjs
-- [ ] 7.2 — `stores/dashboard.ts`
-- [ ] 7.3 — `composables/useDashboard.ts`
-- [ ] 7.4 — Calculs KPI
-- [ ] 7.5 — (Optionnel) Route Go GET /api/crm/dashboard-stats
-- [ ] 7.6 — `KpiCard.vue`
-- [ ] 7.7 — `RevenueChart.vue`
-- [ ] 7.8 — `ConversionFunnel.vue`
-- [ ] 7.9 — `ActivityFeed.vue`
-- [ ] 7.10 — `DashboardView.vue`
-- [ ] 7.11 — Squelettes de chargement
-- [ ] 7.12 — Auto-refresh + refresh manuel
-- [ ] 7.13 — Tester avec donnees seed
-- [ ] 7.14 — Commit
+- [ ] 7.1 — Installer recharts (ou chart.js + react-chartjs-2)
+- [ ] 7.2 — Hook `useDashboard.ts`
+- [ ] 7.3 — Calculs KPI
+- [ ] 7.4 — (Optionnel) Route Go GET /api/crm/dashboard-stats
+- [ ] 7.5 — `KpiCard.tsx`
+- [ ] 7.6 — `RevenueChart.tsx`
+- [ ] 7.7 — `ConversionFunnel.tsx`
+- [ ] 7.8 — `ActivityFeed.tsx`
+- [ ] 7.9 — `DashboardPage.tsx` — integration complete
+- [ ] 7.10 — Squelettes de chargement (Skeleton)
+- [ ] 7.11 — Auto-refresh + refresh manuel
+- [ ] 7.12 — Tester avec donnees seed
+- [ ] 7.13 — Commit
 
 ---
 
@@ -345,9 +339,9 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [ ] 8.7 — Tester build production
 
 ### 8B — Tests
-- [ ] 8.8 — Installer vitest, @vue/test-utils, jsdom
+- [ ] 8.8 — Installer vitest, @testing-library/react, jsdom
 - [ ] 8.9 — Configurer Vitest
-- [ ] 8.10 — Tests auth store
+- [ ] 8.10 — Tests auth store (Zustand)
 - [ ] 8.11 — Tests composants UI
 - [ ] 8.12 — Tests pipeline
 - [ ] 8.13 — Tests integration
@@ -362,7 +356,7 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [ ] 8.20 — Validation formulaires i18n
 - [ ] 8.21 — Responsive mobile/tablet/desktop
 - [ ] 8.22 — Raccourcis clavier
-- [ ] 8.23 — `SettingsView.vue` (profil + gestion users + langue)
+- [ ] 8.23 — `SettingsPage.tsx` (profil + gestion users + langue)
 - [ ] 8.24 — Persister preference langue localStorage
 - [ ] 8.25 — Favicon et titre app
 - [ ] 8.26 — README.md complet

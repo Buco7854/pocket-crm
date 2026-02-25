@@ -1,5 +1,6 @@
 /** Base record fields from PocketBase */
 export interface BaseModel {
+  [key: string]: unknown
   id: string
   created: string
   updated: string

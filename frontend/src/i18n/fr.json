@@ -59,7 +59,15 @@
     "items": "éléments",
     "perPage": "par page",
     "showing": "Affichage",
-    "to": "à"
+    "to": "à",
+    "collapse": "Réduire",
+    "confirmDelete": "Confirmer la suppression",
+    "confirmDeleteMessage": "Êtes-vous sûr de vouloir supprimer « {{name}} » ? Cette action est irréversible.",
+    "addEntity": "Ajouter {{entity}}",
+    "editEntity": "Modifier {{entity}}",
+    "markComplete": "Marquer terminée",
+    "reopen": "Réouvrir",
+    "nSelected": "{{count}} sélectionnés"
   },
   "entities": {
     "contact": "Contact",

@@ -54,7 +54,7 @@ func init() {
 		// ==========================================
 		// COMPANIES
 		// ==========================================
-		companies := core.NewBaseCollection("companies")
+		companies := findOrCreateBase(app, "companies")
 		companies.Fields.Add(&core.TextField{Name: "name", Required: true, Max: 300})
 		companies.Fields.Add(&core.TextField{Name: "industry", Max: 200})
 		companies.Fields.Add(&core.URLField{Name: "website"})
@@ -95,7 +95,7 @@ func init() {
 		// ==========================================
 		// CONTACTS
 		// ==========================================
-		contacts := core.NewBaseCollection("contacts")
+		contacts := findOrCreateBase(app, "contacts")
 		contacts.Fields.Add(&core.TextField{Name: "first_name", Required: true, Max: 200})
 		contacts.Fields.Add(&core.TextField{Name: "last_name", Required: true, Max: 200})
 		contacts.Fields.Add(&core.EmailField{Name: "email"})
@@ -131,7 +131,7 @@ func init() {
 		// ==========================================
 		// LEADS
 		// ==========================================
-		leads := core.NewBaseCollection("leads")
+		leads := findOrCreateBase(app, "leads")
 		leads.Fields.Add(&core.TextField{Name: "title", Required: true, Max: 300})
 		leads.Fields.Add(&core.NumberField{Name: "value", Min: floatPtr(0)})
 		leads.Fields.Add(&core.SelectField{
@@ -182,7 +182,7 @@ func init() {
 		// ==========================================
 		// TASKS
 		// ==========================================
-		tasks := core.NewBaseCollection("tasks")
+		tasks := findOrCreateBase(app, "tasks")
 		tasks.Fields.Add(&core.TextField{Name: "title", Required: true, Max: 300})
 		tasks.Fields.Add(&core.EditorField{Name: "description", MaxSize: 50000})
 		tasks.Fields.Add(&core.SelectField{
@@ -244,7 +244,7 @@ func init() {
 		// ==========================================
 		// EMAIL_TEMPLATES
 		// ==========================================
-		emailTemplates := core.NewBaseCollection("email_templates")
+		emailTemplates := findOrCreateBase(app, "email_templates")
 		emailTemplates.Fields.Add(&core.TextField{Name: "name", Required: true, Max: 300})
 		emailTemplates.Fields.Add(&core.TextField{Name: "subject", Required: true, Max: 500})
 		emailTemplates.Fields.Add(&core.EditorField{Name: "body", Required: true, MaxSize: 100000})
@@ -275,7 +275,7 @@ func init() {
 		// ==========================================
 		// EMAIL_LOGS (write by hooks only)
 		// ==========================================
-		emailLogs := core.NewBaseCollection("email_logs")
+		emailLogs := findOrCreateBase(app, "email_logs")
 		emailLogs.Fields.Add(&core.RelationField{
 			Name:         "template",
 			CollectionId: emailTemplates.Id,
@@ -314,7 +314,7 @@ func init() {
 		// ==========================================
 		// ACTIVITIES (write by hooks only)
 		// ==========================================
-		activities := core.NewBaseCollection("activities")
+		activities := findOrCreateBase(app, "activities")
 		activities.Fields.Add(&core.SelectField{
 			Name:      "type",
 			Required:  true,

@@ -1,16 +1,22 @@
-import { createI18n } from 'vue-i18n'
+import i18n from 'i18next'
+import { initReactI18next } from 'react-i18next'
 import fr from './fr.json'
 import en from './en.json'
 
 export type SupportedLocale = 'fr' | 'en'
 
-const savedLocale = (localStorage.getItem('pocket-crm-locale') as SupportedLocale) || 'fr'
+const savedLocale = localStorage.getItem('pocket-crm-locale') as SupportedLocale | null
 
-const i18n = createI18n({
-  legacy: false,
-  locale: savedLocale,
-  fallbackLocale: 'fr',
-  messages: { fr, en },
+i18n.use(initReactI18next).init({
+  resources: {
+    fr: { translation: fr },
+    en: { translation: en },
+  },
+  lng: savedLocale || 'fr',
+  fallbackLng: 'fr',
+  interpolation: {
+    escapeValue: false,
+  },
 })
 
 export default i18n

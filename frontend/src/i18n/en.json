@@ -59,7 +59,15 @@
     "items": "items",
     "perPage": "per page",
     "showing": "Showing",
-    "to": "to"
+    "to": "to",
+    "collapse": "Collapse",
+    "confirmDelete": "Confirm Deletion",
+    "confirmDeleteMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "addEntity": "Add {{entity}}",
+    "editEntity": "Edit {{entity}}",
+    "markComplete": "Mark as complete",
+    "reopen": "Reopen",
+    "nSelected": "{{count}} selected"
   },
   "entities": {
     "contact": "Contact",

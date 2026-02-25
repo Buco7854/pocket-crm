@@ -1,16 +1,9 @@
 import PocketBase from 'pocketbase'
 
-const pb = new PocketBase(import.meta.env.VITE_PB_URL || 'http://127.0.0.1:8090')
+// In dev, use empty string to route through Vite proxy (avoids CORS).
+// In prod, set VITE_PB_URL to the PocketBase server URL.
+const pb = new PocketBase(import.meta.env.VITE_PB_URL || '/')
 
 pb.autoCancellation(false)
-
-// 401 interceptor — redirect to login on expired/invalid token
-pb.afterSend = function (_response, data) {
-  if (_response.status === 401 && pb.authStore.isValid) {
-    pb.authStore.clear()
-    window.location.href = '/login'
-  }
-  return data
-}
 
 export default pb
