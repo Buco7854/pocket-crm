@@ -1,0 +1,162 @@
+/** Base record fields from PocketBase */
+export interface BaseModel {
+  id: string
+  created: string
+  updated: string
+  collectionId: string
+  collectionName: string
+}
+
+/** User roles */
+export type UserRole = 'admin' | 'commercial' | 'standard'
+
+/** Auth collection */
+export interface User extends BaseModel {
+  email: string
+  verified: boolean
+  name: string
+  role: UserRole
+  avatar: string
+  phone: string
+}
+
+/** Company size categories */
+export type CompanySize = 'tpe' | 'pme' | 'eti' | 'grande_entreprise'
+
+export interface Company extends BaseModel {
+  name: string
+  industry: string
+  website: string
+  email: string
+  phone: string
+  address: string
+  city: string
+  country: string
+  size: CompanySize
+  revenue: number
+  owner: string
+  notes: string
+  logo: string
+}
+
+/** Contact tags */
+export type ContactTag = 'prospect' | 'client' | 'partenaire' | 'fournisseur'
+
+export interface Contact extends BaseModel {
+  first_name: string
+  last_name: string
+  email: string
+  phone: string
+  position: string
+  company: string
+  owner: string
+  notes: string
+  tags: ContactTag[]
+}
+
+/** Lead pipeline statuses */
+export type LeadStatus =
+  | 'nouveau'
+  | 'contacte'
+  | 'qualifie'
+  | 'proposition'
+  | 'negociation'
+  | 'gagne'
+  | 'perdu'
+
+/** Priority levels */
+export type Priority = 'basse' | 'moyenne' | 'haute' | 'urgente'
+
+/** Lead sources */
+export type LeadSource =
+  | 'site_web'
+  | 'email'
+  | 'telephone'
+  | 'salon'
+  | 'recommandation'
+  | 'autre'
+
+export interface Lead extends BaseModel {
+  title: string
+  value: number
+  status: LeadStatus
+  priority: Priority
+  source: LeadSource
+  contact: string
+  company: string
+  owner: string
+  expected_close: string
+  closed_at: string
+  notes: string
+}
+
+/** Task types */
+export type TaskType = 'appel' | 'email' | 'reunion' | 'suivi' | 'autre'
+
+/** Task statuses */
+export type TaskStatus = 'a_faire' | 'en_cours' | 'terminee' | 'annulee'
+
+export interface Task extends BaseModel {
+  title: string
+  description: string
+  type: TaskType
+  status: TaskStatus
+  priority: Priority
+  due_date: string
+  reminder_at: string
+  completed_at: string
+  assignee: string
+  created_by: string
+  contact: string
+  lead: string
+  company: string
+}
+
+/** Email template types */
+export type EmailTemplateType =
+  | 'marketing'
+  | 'transactionnel'
+  | 'relance'
+  | 'bienvenue'
+
+export interface EmailTemplate extends BaseModel {
+  name: string
+  subject: string
+  body: string
+  type: EmailTemplateType
+  active: boolean
+  created_by: string
+}
+
+/** Email log statuses */
+export type EmailLogStatus = 'envoye' | 'echoue' | 'en_attente'
+
+export interface EmailLog extends BaseModel {
+  template: string
+  recipient_email: string
+  recipient_contact: string
+  subject: string
+  status: EmailLogStatus
+  sent_at: string
+  error_message: string
+  sent_by: string
+}
+
+/** Activity types */
+export type ActivityType =
+  | 'creation'
+  | 'modification'
+  | 'email'
+  | 'appel'
+  | 'note'
+  | 'statut_change'
+
+export interface Activity extends BaseModel {
+  type: ActivityType
+  description: string
+  user: string
+  contact: string
+  lead: string
+  company: string
+  metadata: Record<string, unknown>
+}

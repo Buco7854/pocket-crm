@@ -196,60 +196,60 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 ## Phase 3 : Composants Frontend de Base
 
 ### 3A — Configuration de base et types TypeScript
-- [ ] 3.1 — Creer `src/types/models.ts` : interfaces TS pour toutes les entites
-- [ ] 3.2 — Creer `src/types/pocketbase.ts` : types expand PB, ListResult, RecordModel
-- [ ] 3.3 — Creer `src/lib/pocketbase.ts` : singleton SDK type
-- [ ] 3.4 — Configurer Pinia dans `main.ts`
-- [ ] 3.5 — Configurer i18n dans `src/i18n/index.ts`
-- [ ] 3.6 — Creer `src/i18n/fr.json` : traductions francaises
-- [ ] 3.7 — Creer `src/i18n/en.json` : traductions anglaises
-- [ ] 3.8 — Enregistrer vue-i18n dans `main.ts`
+- [x] 3.1 — Creer `src/types/models.ts` : interfaces TS pour toutes les entites
+- [x] 3.2 — Creer `src/types/pocketbase.ts` : types expand PB, ListResult, RecordModel
+- [x] 3.3 — Creer `src/lib/pocketbase.ts` : singleton SDK type
+- [x] 3.4 — Configurer Pinia dans `main.ts`
+- [x] 3.5 — Configurer i18n dans `src/i18n/index.ts`
+- [x] 3.6 — Creer `src/i18n/fr.json` : traductions francaises
+- [x] 3.7 — Creer `src/i18n/en.json` : traductions anglaises
+- [x] 3.8 — Enregistrer vue-i18n dans `main.ts`
 
 ### 3B — Layout et Navigation
-- [ ] 3.9 — Configurer Vue Router (`router/index.ts`) avec types RouteMeta
-- [ ] 3.10 — `AppLayout.vue` : sidebar + topbar + router-view
-- [ ] 3.11 — `AppSidebar.vue` : navigation i18n + visibilite par role
-- [ ] 3.12 — `AppTopbar.vue` : breadcrumb, search, user dropdown
-- [ ] 3.13 — `LocaleSwitcher.vue` : basculer FR/EN
-- [ ] 3.14 — `AppBreadcrumb.vue`
+- [x] 3.9 — Configurer Vue Router (`router/index.ts`) avec types RouteMeta
+- [x] 3.10 — `AppLayout.vue` : sidebar + topbar + router-view
+- [x] 3.11 — `AppSidebar.vue` : navigation i18n + visibilite par role
+- [x] 3.12 — `AppTopbar.vue` : breadcrumb, search, user dropdown
+- [x] 3.13 — `LocaleSwitcher.vue` : basculer FR/EN
+- [x] 3.14 — `AppBreadcrumb.vue`
 
 ### 3C — Composants UI reutilisables
-- [ ] 3.15 — `BaseButton.vue`
-- [ ] 3.16 — `BaseInput.vue`
-- [ ] 3.17 — `BaseSelect.vue`
-- [ ] 3.18 — `BaseModal.vue`
-- [ ] 3.19 — `BaseTable.vue`
-- [ ] 3.20 — `BaseCard.vue`
-- [ ] 3.21 — `BaseBadge.vue`
-- [ ] 3.22 — `BaseAlert.vue`
-- [ ] 3.23 — `BasePagination.vue`
-- [ ] 3.24 — `BaseSearchFilter.vue`
+- [x] 3.15 — `BaseButton.vue`
+- [x] 3.16 — `BaseInput.vue`
+- [x] 3.17 — `BaseSelect.vue`
+- [x] 3.18 — `BaseModal.vue`
+- [x] 3.19 — `BaseTable.vue`
+- [x] 3.20 — `BaseCard.vue`
+- [x] 3.21 — `BaseBadge.vue`
+- [x] 3.22 — `BaseAlert.vue`
+- [x] 3.23 — `BasePagination.vue`
+- [x] 3.24 — `BaseSearchFilter.vue`
 
 ### 3D — Theme et structure
-- [ ] 3.25 — Theme Tailwind (couleurs CRM + pipeline)
-- [ ] 3.26 — Stub views pour toutes les routes
-- [ ] 3.27 — Wirer `App.vue` : AppLayout / layout nu
-- [ ] 3.28 — Verifier navigation, responsive, switch FR/EN
-- [ ] 3.29 — Commit
+- [x] 3.25 — Theme Tailwind (couleurs CRM + pipeline)
+- [x] 3.26 — Stub views pour toutes les routes
+- [x] 3.27 — Wirer `App.vue` : AppLayout / layout nu
+- [x] 3.28 — Verifier navigation, responsive, switch FR/EN
+- [x] 3.29 — Commit
 
 ---
 
 ## Phase 4 : Auth & Integration API
 
-- [ ] 4.1 — `stores/auth.ts` : state, computed, actions
-- [ ] 4.2 — Implementer `login()`
-- [ ] 4.3 — Implementer `register()`
-- [ ] 4.4 — Implementer `logout()`
-- [ ] 4.5 — Persistance auth
-- [ ] 4.6 — `LoginView.vue`
-- [ ] 4.7 — `RegisterView.vue`
-- [ ] 4.8 — Navigation guard `router.beforeEach()`
-- [ ] 4.9 — Composable `useAuth.ts`
-- [ ] 4.10 — Mettre a jour Sidebar/Topbar avec role
-- [ ] 4.11 — Composable generique `useCollection.ts`
-- [ ] 4.12 — Intercepteur erreurs SDK 401
-- [ ] 4.13 — Tester le flow complet auth
-- [ ] 4.14 — Commit
+- [x] 4.1 — `stores/auth.ts` : state, computed, actions
+- [x] 4.2 — Implementer `login()`
+- [x] 4.3 — Implementer `register()`
+- [x] 4.4 — Implementer `logout()`
+- [x] 4.5 — Persistance auth
+- [x] 4.6 — `LoginView.vue`
+- [x] 4.7 — `RegisterView.vue`
+- [x] 4.8 — Navigation guard `router.beforeEach()`
+- [x] 4.9 — Composable `useAuth.ts`
+- [x] 4.10 — Mettre a jour Sidebar/Topbar avec role
+- [x] 4.11 — Composable generique `useCollection.ts`
+- [x] 4.12 — Intercepteur erreurs SDK 401
+- [x] 4.13 — Tester le flow complet auth
+- [x] 4.14 — Commit
 
 ---
 

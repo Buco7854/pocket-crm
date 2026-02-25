@@ -1,0 +1,219 @@
+{
+  "app": {
+    "name": "Pocket CRM",
+    "description": "Gestion de la relation client"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "contacts": "Contacts",
+    "companies": "Entreprises",
+    "leads": "Opportunités",
+    "pipeline": "Pipeline",
+    "tasks": "Tâches",
+    "email": "Email",
+    "settings": "Paramètres"
+  },
+  "auth": {
+    "login": "Connexion",
+    "register": "Inscription",
+    "logout": "Déconnexion",
+    "email": "Adresse email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "name": "Nom complet",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccount": "Pas encore de compte ?",
+    "hasAccount": "Déjà un compte ?",
+    "signIn": "Se connecter",
+    "signUp": "S'inscrire",
+    "continueWith": "Continuer avec {provider}",
+    "orEmail": "ou par email"
+  },
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "add": "Ajouter",
+    "search": "Rechercher…",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "export": "Exporter",
+    "import": "Importer",
+    "refresh": "Actualiser",
+    "loading": "Chargement…",
+    "noResults": "Aucun résultat",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "close": "Fermer",
+    "yes": "Oui",
+    "no": "Non",
+    "all": "Tous",
+    "none": "Aucun",
+    "actions": "Actions",
+    "details": "Détails",
+    "of": "de",
+    "items": "éléments",
+    "perPage": "par page",
+    "showing": "Affichage",
+    "to": "à"
+  },
+  "entities": {
+    "contact": "Contact",
+    "contacts": "Contacts",
+    "company": "Entreprise",
+    "companies": "Entreprises",
+    "lead": "Opportunité",
+    "leads": "Opportunités",
+    "task": "Tâche",
+    "tasks": "Tâches",
+    "activity": "Activité",
+    "activities": "Activités",
+    "emailTemplate": "Modèle d'email",
+    "emailTemplates": "Modèles d'email",
+    "emailLog": "Journal d'envoi",
+    "emailLogs": "Journaux d'envoi"
+  },
+  "fields": {
+    "name": "Nom",
+    "firstName": "Prénom",
+    "lastName": "Nom de famille",
+    "email": "Email",
+    "phone": "Téléphone",
+    "position": "Poste",
+    "company": "Entreprise",
+    "owner": "Responsable",
+    "tags": "Tags",
+    "industry": "Secteur",
+    "website": "Site web",
+    "address": "Adresse",
+    "city": "Ville",
+    "country": "Pays",
+    "size": "Taille",
+    "revenue": "Chiffre d'affaires",
+    "notes": "Notes",
+    "title": "Titre",
+    "value": "Montant",
+    "status": "Statut",
+    "priority": "Priorité",
+    "source": "Source",
+    "expectedClose": "Date de clôture prévue",
+    "closedAt": "Date de clôture",
+    "description": "Description",
+    "type": "Type",
+    "dueDate": "Date d'échéance",
+    "reminderAt": "Rappel",
+    "completedAt": "Date de complétion",
+    "assignee": "Assigné à",
+    "createdBy": "Créé par",
+    "createdAt": "Créé le",
+    "updatedAt": "Modifié le",
+    "subject": "Objet",
+    "body": "Corps",
+    "active": "Actif",
+    "role": "Rôle"
+  },
+  "status": {
+    "nouveau": "Nouveau",
+    "contacte": "Contacté",
+    "qualifie": "Qualifié",
+    "proposition": "Proposition",
+    "negociation": "Négociation",
+    "gagne": "Gagné",
+    "perdu": "Perdu"
+  },
+  "priority": {
+    "basse": "Basse",
+    "moyenne": "Moyenne",
+    "haute": "Haute",
+    "urgente": "Urgente"
+  },
+  "taskStatus": {
+    "a_faire": "À faire",
+    "en_cours": "En cours",
+    "terminee": "Terminée",
+    "annulee": "Annulée"
+  },
+  "taskType": {
+    "appel": "Appel",
+    "email": "Email",
+    "reunion": "Réunion",
+    "suivi": "Suivi",
+    "autre": "Autre"
+  },
+  "leadSource": {
+    "site_web": "Site web",
+    "email": "Email",
+    "telephone": "Téléphone",
+    "salon": "Salon",
+    "recommandation": "Recommandation",
+    "autre": "Autre"
+  },
+  "companySize": {
+    "tpe": "TPE",
+    "pme": "PME",
+    "eti": "ETI",
+    "grande_entreprise": "Grande entreprise"
+  },
+  "contactTag": {
+    "prospect": "Prospect",
+    "client": "Client",
+    "partenaire": "Partenaire",
+    "fournisseur": "Fournisseur"
+  },
+  "emailTemplateType": {
+    "marketing": "Marketing",
+    "transactionnel": "Transactionnel",
+    "relance": "Relance",
+    "bienvenue": "Bienvenue"
+  },
+  "emailLogStatus": {
+    "envoye": "Envoyé",
+    "echoue": "Échoué",
+    "en_attente": "En attente"
+  },
+  "activityType": {
+    "creation": "Création",
+    "modification": "Modification",
+    "email": "Email",
+    "appel": "Appel",
+    "note": "Note",
+    "statut_change": "Changement de statut"
+  },
+  "roles": {
+    "admin": "Administrateur",
+    "commercial": "Commercial",
+    "standard": "Standard"
+  },
+  "theme": {
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  },
+  "validation": {
+    "required": "Ce champ est requis",
+    "email": "Adresse email invalide",
+    "minLength": "Minimum {min} caractères",
+    "maxLength": "Maximum {max} caractères"
+  },
+  "empty": {
+    "contacts": "Aucun contact pour le moment",
+    "companies": "Aucune entreprise pour le moment",
+    "leads": "Aucune opportunité pour le moment",
+    "tasks": "Aucune tâche pour le moment",
+    "activities": "Aucune activité récente"
+  },
+  "dashboard": {
+    "welcome": "Bienvenue",
+    "totalContacts": "Contacts",
+    "totalCompanies": "Entreprises",
+    "openLeads": "Opportunités ouvertes",
+    "tasksToday": "Tâches du jour",
+    "recentActivities": "Activités récentes",
+    "pipelineOverview": "Aperçu du pipeline",
+    "revenue": "Chiffre d'affaires"
+  }
+}

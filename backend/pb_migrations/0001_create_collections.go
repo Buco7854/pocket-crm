@@ -13,9 +13,12 @@ func init() {
 		adminOrCommercial := strPtr("@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'commercial')")
 
 		// ==========================================
-		// USERS (auth collection)
+		// USERS (update existing auth collection)
 		// ==========================================
-		users := core.NewAuthCollection("users")
+		users, err := app.FindCollectionByNameOrId("users")
+		if err != nil {
+			users = core.NewAuthCollection("users")
+		}
 		users.Fields.Add(&core.TextField{
 			Name:     "name",
 			Required: true,
