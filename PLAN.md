@@ -164,32 +164,32 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [x] 1.21 — Configurer `vite.config.ts` (proxy /api -> pocketbase:8090, alias @/)
 - [x] 1.22 — Verifier : `docker-compose up`, PocketBase Admin sur :8090/_/, Vue dev sur :3000
 - [x] 1.23 — Creer superuser PocketBase via CLI
-- [ ] 1.24 — Commit initial
+- [x] 1.24 — Commit initial
 
 ---
 
 ## Phase 2 : Modelisation BDD dans PocketBase
 
-- [ ] 2.1 — Configurer collection `users` (auth) : ajouter champs name, role, avatar, phone
-- [ ] 2.2 — Definir API rules sur `users`
-- [ ] 2.3 — Creer collection `companies` avec tous les champs
-- [ ] 2.4 — API rules sur `companies`
-- [ ] 2.5 — Creer collection `contacts` avec tous les champs + relations company/owner
-- [ ] 2.6 — API rules sur `contacts`
-- [ ] 2.7 — Creer collection `leads` avec les 7 statuts pipeline + relations
-- [ ] 2.8 — API rules sur `leads`
-- [ ] 2.9 — Creer collection `tasks` avec relations assignee/created_by/contact/lead/company
-- [ ] 2.10 — API rules sur `tasks`
-- [ ] 2.11 — Creer collection `email_templates`
-- [ ] 2.12 — API rules sur `email_templates`
-- [ ] 2.13 — Creer collection `email_logs` (ecriture hook-only)
-- [ ] 2.14 — API rules sur `email_logs`
-- [ ] 2.15 — Creer collection `activities` (ecriture hook-only)
-- [ ] 2.16 — API rules sur `activities`
-- [ ] 2.17 — Exporter le schema en migrations dans `backend/pb_migrations/`
-- [ ] 2.18 — Creer donnees de test : 3 users, 5 companies, 10 contacts, 5 leads, 5 tasks
-- [ ] 2.19 — Verifier les relations avec les expand queries
-- [ ] 2.20 — Commit
+- [x] 2.1 — Configurer collection `users` (auth) : ajouter champs name, role, avatar, phone
+- [x] 2.2 — Definir API rules sur `users`
+- [x] 2.3 — Creer collection `companies` avec tous les champs
+- [x] 2.4 — API rules sur `companies`
+- [x] 2.5 — Creer collection `contacts` avec tous les champs + relations company/owner
+- [x] 2.6 — API rules sur `contacts`
+- [x] 2.7 — Creer collection `leads` avec les 7 statuts pipeline + relations
+- [x] 2.8 — API rules sur `leads`
+- [x] 2.9 — Creer collection `tasks` avec relations assignee/created_by/contact/lead/company
+- [x] 2.10 — API rules sur `tasks`
+- [x] 2.11 — Creer collection `email_templates`
+- [x] 2.12 — API rules sur `email_templates`
+- [x] 2.13 — Creer collection `email_logs` (ecriture hook-only)
+- [x] 2.14 — API rules sur `email_logs`
+- [x] 2.15 — Creer collection `activities` (ecriture hook-only)
+- [x] 2.16 — API rules sur `activities`
+- [x] 2.17 — Exporter le schema en migrations dans `backend/pb_migrations/`
+- [x] 2.18 — Creer donnees de test : 3 users, 5 companies, 10 contacts, 5 leads, 5 tasks
+- [x] 2.19 — Verifier les relations avec les expand queries
+- [x] 2.20 — Commit
 
 ---
 
