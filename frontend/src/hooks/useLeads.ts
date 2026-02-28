@@ -1,4 +1,5 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
+import pb from '@/lib/pocketbase'
 import { useCollection } from '@/hooks/useCollection'
 import type { Lead } from '@/types/models'
 
@@ -33,5 +34,28 @@ export function useLeads() {
     return collection.update(id, { status } as Partial<Lead>)
   }, [collection.update])
 
-  return { ...collection, fetchLeads, fetchPipelineLeads, updateLeadStatus }
+  /**
+   * Subscribe to realtime changes on the leads collection.
+   * Returns an unsubscribe function — call it on cleanup.
+   */
+  const subscribeRealtime = useCallback((onRefresh: () => void) => {
+    let unsubscribed = false
+    let unsubFn: (() => void) | null = null
+
+    pb.collection('leads').subscribe('*', () => {
+      if (!unsubscribed) onRefresh()
+    }).then((unsub) => {
+      unsubFn = unsub
+    }).catch(() => {
+      // Realtime unavailable (e.g. SSE not supported) — silently ignore
+    })
+
+    return () => {
+      unsubscribed = true
+      if (unsubFn) unsubFn()
+      else pb.collection('leads').unsubscribe('*').catch(() => {})
+    }
+  }, [])
+
+  return { ...collection, fetchLeads, fetchPipelineLeads, updateLeadStatus, subscribeRealtime }
 }

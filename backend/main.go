@@ -9,6 +9,7 @@ import (
 	// Auto-register Go migrations on startup
 	_ "pocket-crm/pb_migrations"
 
+	"pocket-crm/hooks"
 	"pocket-crm/seeds"
 )
 
@@ -27,8 +28,10 @@ func main() {
 		},
 	})
 
-	// Custom hooks and routes will be registered here in Phase 6
-	// Example:
+	// Phase 5 — Invoice hooks (auto-calculate TTC total + overdue check)
+	hooks.RegisterInvoiceHooks(app)
+
+	// Phase 6 hooks will be registered here:
 	// hooks.RegisterLeadHooks(app)
 	// hooks.RegisterEmailRoutes(app)
 

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 export type BadgeVariant =
   | 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
   | 'nouveau' | 'contacte' | 'qualifie' | 'proposition' | 'negociation' | 'gagne' | 'perdu'
+  | 'brouillon' | 'emise' | 'payee' | 'en_retard' | 'annulee'
 
 interface Props {
   variant?: BadgeVariant
@@ -25,6 +26,11 @@ const variantClasses: Record<BadgeVariant, string> = {
   negociation: 'bg-orange-50 text-orange-700',
   gagne: 'bg-emerald-50 text-emerald-700',
   perdu: 'bg-red-50 text-red-700',
+  brouillon: 'bg-surface-100 text-surface-600',
+  emise: 'bg-blue-50 text-blue-700',
+  payee: 'bg-emerald-50 text-emerald-700',
+  en_retard: 'bg-danger-50 text-danger-700',
+  annulee: 'bg-surface-100 text-surface-400',
 }
 
 const dotColors: Record<BadgeVariant, string> = {
@@ -32,6 +38,8 @@ const dotColors: Record<BadgeVariant, string> = {
   warning: 'bg-warning-500', danger: 'bg-danger-500', info: 'bg-blue-500',
   nouveau: 'bg-indigo-500', contacte: 'bg-violet-500', qualifie: 'bg-cyan-500',
   proposition: 'bg-amber-500', negociation: 'bg-orange-500', gagne: 'bg-emerald-500', perdu: 'bg-red-500',
+  brouillon: 'bg-surface-400', emise: 'bg-blue-500', payee: 'bg-emerald-500',
+  en_retard: 'bg-danger-500', annulee: 'bg-surface-300',
 }
 
 export default function Badge({ variant = 'default', dot = false, size = 'md', children }: Props) {

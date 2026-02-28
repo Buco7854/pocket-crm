@@ -5,12 +5,15 @@ import { lazy, Suspense } from 'react'
 
 const LoginPage = lazy(() => import('@/pages/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/RegisterPage'))
+const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'))
+const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const ContactsPage = lazy(() => import('@/pages/ContactsPage'))
 const CompaniesPage = lazy(() => import('@/pages/CompaniesPage'))
 const LeadsPage = lazy(() => import('@/pages/LeadsPage'))
 const PipelinePage = lazy(() => import('@/pages/PipelinePage'))
 const TasksPage = lazy(() => import('@/pages/TasksPage'))
+const InvoicesPage = lazy(() => import('@/pages/InvoicesPage'))
 const EmailPage = lazy(() => import('@/pages/EmailPage'))
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'))
 
@@ -55,6 +58,14 @@ export const router = createBrowserRouter([
     element: <RequireGuest><S><RegisterPage /></S></RequireGuest>,
   },
   {
+    path: '/forgot-password',
+    element: <RequireGuest><S><ForgotPasswordPage /></S></RequireGuest>,
+  },
+  {
+    path: '/reset-password',
+    element: <RequireGuest><S><ResetPasswordPage /></S></RequireGuest>,
+  },
+  {
     element: <RequireAuth><AppLayout /></RequireAuth>,
     children: [
       { path: '/', element: <S><DashboardPage /></S> },
@@ -63,6 +74,14 @@ export const router = createBrowserRouter([
       { path: '/leads', element: <S><LeadsPage /></S> },
       { path: '/pipeline', element: <S><PipelinePage /></S> },
       { path: '/tasks', element: <S><TasksPage /></S> },
+      {
+        path: '/invoices',
+        element: (
+          <RequireRole roles={['admin', 'commercial']}>
+            <S><InvoicesPage /></S>
+          </RequireRole>
+        ),
+      },
       {
         path: '/email',
         element: (

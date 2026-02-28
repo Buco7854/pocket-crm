@@ -18,7 +18,7 @@ import type { SelectOption } from '@/components/ui/Select'
 export default function PipelinePage() {
   const { t } = useTranslation()
   const { isAdmin, isCommercial, user } = useAuthStore()
-  const { items, loading, error, fetchPipelineLeads, create, update, remove, updateLeadStatus } = useLeads()
+  const { items, loading, error, fetchPipelineLeads, create, update, remove, updateLeadStatus, subscribeRealtime } = useLeads()
   const contactsCollection = useCollection<Contact>('contacts')
   const companiesCollection = useCollection<Company>('companies')
 
@@ -45,6 +45,12 @@ export default function PipelinePage() {
 
   const load = useCallback(() => { fetchPipelineLeads() }, [fetchPipelineLeads])
   useEffect(() => { load() }, [load])
+
+  // Realtime subscription: refresh pipeline on any lead change
+  useEffect(() => {
+    const unsub = subscribeRealtime(load)
+    return unsub
+  }, [subscribeRealtime, load])
 
   async function handleStatusChange(leadId: string, newStatus: LeadStatus) {
     await updateLeadStatus(leadId, newStatus)

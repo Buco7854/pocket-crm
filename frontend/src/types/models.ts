@@ -113,6 +113,33 @@ export interface Task extends BaseModel {
   company: string
 }
 
+/** Invoice line item */
+export interface InvoiceItem {
+  description: string
+  qty: number
+  unit_price: number
+}
+
+/** Invoice statuses */
+export type InvoiceStatus = 'brouillon' | 'emise' | 'payee' | 'en_retard' | 'annulee'
+
+export interface Invoice extends BaseModel {
+  number: string
+  contact: string
+  company: string
+  lead: string
+  owner: string
+  amount: number
+  tax_rate: number
+  total: number
+  status: InvoiceStatus
+  issued_at: string
+  due_at: string
+  paid_at: string
+  items: InvoiceItem[]
+  notes: string
+}
+
 /** Email template types */
 export type EmailTemplateType =
   | 'marketing'

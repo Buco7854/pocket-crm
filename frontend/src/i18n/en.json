@@ -10,6 +10,7 @@
     "leads": "Leads",
     "pipeline": "Pipeline",
     "tasks": "Tasks",
+    "invoices": "Invoices",
     "email": "Email",
     "settings": "Settings"
   },
@@ -20,14 +21,24 @@
     "email": "Email address",
     "password": "Password",
     "confirmPassword": "Confirm password",
+    "newPassword": "New password",
     "name": "Full name",
     "forgotPassword": "Forgot password?",
+    "forgotPasswordHint": "Enter your email to receive a password reset link.",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
     "signIn": "Sign in",
     "signUp": "Sign up",
     "continueWith": "Continue with {provider}",
-    "orEmail": "or with email"
+    "orEmail": "or with email",
+    "sendResetLink": "Send reset link",
+    "resetEmailSent": "An email was sent to {{email}}. Check your inbox.",
+    "backToLogin": "Back to login",
+    "resetPassword": "Reset password",
+    "passwordResetSuccess": "Password reset successfully. You can now sign in.",
+    "passwordMismatch": "Passwords do not match.",
+    "resetError": "An error occurred. Check the link or try again.",
+    "invalidResetToken": "The reset link is invalid or expired."
   },
   "common": {
     "save": "Save",
@@ -78,6 +89,8 @@
     "leads": "Leads",
     "task": "Task",
     "tasks": "Tasks",
+    "invoice": "Invoice",
+    "invoices": "Invoices",
     "activity": "Activity",
     "activities": "Activities",
     "emailTemplate": "Email Template",
@@ -172,6 +185,39 @@
     "partenaire": "Partner",
     "fournisseur": "Supplier"
   },
+  "invoiceStatus": {
+    "brouillon": "Draft",
+    "emise": "Issued",
+    "payee": "Paid",
+    "en_retard": "Overdue",
+    "annulee": "Cancelled"
+  },
+  "invoices": {
+    "invoice": "Invoice",
+    "number": "Number",
+    "amountHT": "Amount (excl. tax)",
+    "totalTTC": "Total (incl. tax)",
+    "taxRate": "Tax rate",
+    "issuedAt": "Issue date",
+    "dueAt": "Due date",
+    "paidAt": "Payment date",
+    "items": "Line items",
+    "addLine": "Add line",
+    "qty": "Qty",
+    "unitPrice": "Unit price",
+    "lineTotal": "Line total",
+    "noItems": "Add at least one line item",
+    "markPaid": "Mark as paid"
+  },
+  "tasks": {
+    "viewList": "List",
+    "viewCalendar": "Calendar",
+    "viewReminders": "Reminders",
+    "overdue": "Overdue",
+    "dueToday": "Due today",
+    "dueSoon": "Coming up (48h)",
+    "noReminders": "No reminders — all tasks are up to date."
+  },
   "emailTemplateType": {
     "marketing": "Marketing",
     "transactionnel": "Transactional",
@@ -212,6 +258,7 @@
     "companies": "No companies yet",
     "leads": "No leads yet",
     "tasks": "No tasks yet",
+    "invoices": "No invoices yet",
     "activities": "No recent activity"
   },
   "dashboard": {
