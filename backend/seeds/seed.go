@@ -464,6 +464,185 @@ func Run(app core.App) error {
 	_ = t4
 	_ = t5
 
-	fmt.Println("Seed completed: 3 users, 5 companies, 10 contacts, 5 leads, 5 tasks")
+	// ==========================================
+	// INVOICES (8 — varied statuses)
+	// ==========================================
+	invoicesCol, err := app.FindCollectionByNameOrId("invoices")
+	if err != nil {
+		return fmt.Errorf("find invoices collection: %w", err)
+	}
+
+	// Helper: create invoice items JSON
+	type InvoiceItem struct {
+		Description string  `json:"description"`
+		Qty         int     `json:"qty"`
+		UnitPrice   float64 `json:"unit_price"`
+	}
+
+	inv1 := core.NewRecord(invoicesCol)
+	inv1.Set("number", "FAC-2026-001")
+	inv1.Set("contact", c1.Id)
+	inv1.Set("company", acme.Id)
+	inv1.Set("lead", l1.Id)
+	inv1.Set("owner", admin.Id)
+	inv1.Set("amount", 75000.0)
+	inv1.Set("tax_rate", 20.0)
+	inv1.Set("total", 90000.0)
+	inv1.Set("status", "payee")
+	inv1.Set("issued_at", "2026-01-15 00:00:00.000Z")
+	inv1.Set("due_at", "2026-02-15 00:00:00.000Z")
+	inv1.Set("paid_at", "2026-02-10 00:00:00.000Z")
+	inv1.Set("items", []InvoiceItem{
+		{Description: "Migration cloud - forfait", Qty: 1, UnitPrice: 60000},
+		{Description: "Formation équipe (5 jours)", Qty: 5, UnitPrice: 3000},
+	})
+	if err := app.Save(inv1); err != nil {
+		return fmt.Errorf("create invoice FAC-2026-001: %w", err)
+	}
+
+	inv2 := core.NewRecord(invoicesCol)
+	inv2.Set("number", "FAC-2026-002")
+	inv2.Set("contact", c3.Id)
+	inv2.Set("company", biovert.Id)
+	inv2.Set("lead", l2.Id)
+	inv2.Set("owner", commercial.Id)
+	inv2.Set("amount", 22500.0)
+	inv2.Set("tax_rate", 20.0)
+	inv2.Set("total", 27000.0)
+	inv2.Set("status", "emise")
+	inv2.Set("issued_at", "2026-02-01 00:00:00.000Z")
+	inv2.Set("due_at", "2026-03-01 00:00:00.000Z")
+	inv2.Set("items", []InvoiceItem{
+		{Description: "Développement plateforme données - phase 1", Qty: 1, UnitPrice: 22500},
+	})
+	if err := app.Save(inv2); err != nil {
+		return fmt.Errorf("create invoice FAC-2026-002: %w", err)
+	}
+
+	inv3 := core.NewRecord(invoicesCol)
+	inv3.Set("number", "FAC-2026-003")
+	inv3.Set("contact", c5.Id)
+	inv3.Set("company", dataflow.Id)
+	inv3.Set("owner", admin.Id)
+	inv3.Set("amount", 8000.0)
+	inv3.Set("tax_rate", 20.0)
+	inv3.Set("total", 9600.0)
+	inv3.Set("status", "brouillon")
+	inv3.Set("issued_at", "2026-02-20 00:00:00.000Z")
+	inv3.Set("due_at", "2026-03-20 00:00:00.000Z")
+	inv3.Set("items", []InvoiceItem{
+		{Description: "Audit architecture IA", Qty: 4, UnitPrice: 1500},
+		{Description: "Rapport de recommandations", Qty: 1, UnitPrice: 2000},
+	})
+	if err := app.Save(inv3); err != nil {
+		return fmt.Errorf("create invoice FAC-2026-003: %w", err)
+	}
+
+	inv4 := core.NewRecord(invoicesCol)
+	inv4.Set("number", "FAC-2026-004")
+	inv4.Set("contact", c7.Id)
+	inv4.Set("company", ecologis.Id)
+	inv4.Set("lead", l4.Id)
+	inv4.Set("owner", commercial.Id)
+	inv4.Set("amount", 45000.0)
+	inv4.Set("tax_rate", 20.0)
+	inv4.Set("total", 54000.0)
+	inv4.Set("status", "en_retard")
+	inv4.Set("issued_at", "2025-12-01 00:00:00.000Z")
+	inv4.Set("due_at", "2026-01-01 00:00:00.000Z")
+	inv4.Set("items", []InvoiceItem{
+		{Description: "Licence logiciel gestion (annuelle)", Qty: 1, UnitPrice: 35000},
+		{Description: "Installation et configuration", Qty: 1, UnitPrice: 10000},
+	})
+	if err := app.Save(inv4); err != nil {
+		return fmt.Errorf("create invoice FAC-2026-004: %w", err)
+	}
+
+	inv5 := core.NewRecord(invoicesCol)
+	inv5.Set("number", "FAC-2026-005")
+	inv5.Set("contact", c9.Id)
+	inv5.Set("company", fintech.Id)
+	inv5.Set("lead", l5.Id)
+	inv5.Set("owner", commercial.Id)
+	inv5.Set("amount", 35000.0)
+	inv5.Set("tax_rate", 20.0)
+	inv5.Set("total", 42000.0)
+	inv5.Set("status", "payee")
+	inv5.Set("issued_at", "2025-11-15 00:00:00.000Z")
+	inv5.Set("due_at", "2025-12-15 00:00:00.000Z")
+	inv5.Set("paid_at", "2025-12-10 00:00:00.000Z")
+	inv5.Set("items", []InvoiceItem{
+		{Description: "Audit sécurité complet", Qty: 1, UnitPrice: 30000},
+		{Description: "Rapport et plan de remédiation", Qty: 1, UnitPrice: 5000},
+	})
+	if err := app.Save(inv5); err != nil {
+		return fmt.Errorf("create invoice FAC-2026-005: %w", err)
+	}
+
+	inv6 := core.NewRecord(invoicesCol)
+	inv6.Set("number", "FAC-2026-006")
+	inv6.Set("contact", c2.Id)
+	inv6.Set("company", acme.Id)
+	inv6.Set("owner", admin.Id)
+	inv6.Set("amount", 12000.0)
+	inv6.Set("tax_rate", 20.0)
+	inv6.Set("total", 14400.0)
+	inv6.Set("status", "emise")
+	inv6.Set("issued_at", "2026-02-10 00:00:00.000Z")
+	inv6.Set("due_at", "2026-03-10 00:00:00.000Z")
+	inv6.Set("items", []InvoiceItem{
+		{Description: "Maintenance applicative mensuelle", Qty: 3, UnitPrice: 4000},
+	})
+	if err := app.Save(inv6); err != nil {
+		return fmt.Errorf("create invoice FAC-2026-006: %w", err)
+	}
+
+	inv7 := core.NewRecord(invoicesCol)
+	inv7.Set("number", "FAC-2026-007")
+	inv7.Set("contact", c6.Id)
+	inv7.Set("company", dataflow.Id)
+	inv7.Set("owner", admin.Id)
+	inv7.Set("amount", 5500.0)
+	inv7.Set("tax_rate", 20.0)
+	inv7.Set("total", 6600.0)
+	inv7.Set("status", "annulee")
+	inv7.Set("issued_at", "2025-10-01 00:00:00.000Z")
+	inv7.Set("due_at", "2025-11-01 00:00:00.000Z")
+	inv7.Set("items", []InvoiceItem{
+		{Description: "Prestation conseil annulée", Qty: 1, UnitPrice: 5500},
+	})
+	if err := app.Save(inv7); err != nil {
+		return fmt.Errorf("create invoice FAC-2026-007: %w", err)
+	}
+
+	inv8 := core.NewRecord(invoicesCol)
+	inv8.Set("number", "FAC-2026-008")
+	inv8.Set("contact", c10.Id)
+	inv8.Set("company", fintech.Id)
+	inv8.Set("owner", commercial.Id)
+	inv8.Set("amount", 18500.0)
+	inv8.Set("tax_rate", 20.0)
+	inv8.Set("total", 22200.0)
+	inv8.Set("status", "brouillon")
+	inv8.Set("issued_at", "2026-02-25 00:00:00.000Z")
+	inv8.Set("due_at", "2026-03-25 00:00:00.000Z")
+	inv8.Set("items", []InvoiceItem{
+		{Description: "Développement module conformité DORA", Qty: 1, UnitPrice: 15000},
+		{Description: "Tests et recette", Qty: 1, UnitPrice: 3500},
+	})
+	if err := app.Save(inv8); err != nil {
+		return fmt.Errorf("create invoice FAC-2026-008: %w", err)
+	}
+
+	_ = inv1
+	_ = inv2
+	_ = inv3
+	_ = inv4
+	_ = inv5
+	_ = inv6
+	_ = inv7
+	_ = inv8
+
+	fmt.Println("Seed completed: 3 users, 5 companies, 10 contacts, 5 leads, 5 tasks, 8 invoices")
 	return nil
 }

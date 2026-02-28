@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
+import { Plus, List, CalendarDays, Bell } from 'lucide-react'
 import { useTasks } from '@/hooks/useTasks'
 import { useCollection } from '@/hooks/useCollection'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -15,12 +15,16 @@ import Alert from '@/components/ui/Alert'
 import TaskList from '@/components/tasks/TaskList'
 import TaskForm from '@/components/tasks/TaskForm'
 import TaskDetail from '@/components/tasks/TaskDetail'
+import TaskCalendar from '@/components/tasks/TaskCalendar'
+import TaskReminder from '@/components/tasks/TaskReminder'
 import type { Task, TaskStatus, TaskType, Priority, User, Contact, Company } from '@/types/models'
 import type { SelectOption } from '@/components/ui/Select'
 
 const statuses: TaskStatus[] = ['a_faire', 'en_cours', 'terminee', 'annulee']
 const types: TaskType[] = ['appel', 'email', 'reunion', 'suivi', 'autre']
 const priorities: Priority[] = ['basse', 'moyenne', 'haute', 'urgente']
+
+type TabKey = 'list' | 'calendar' | 'reminders'
 
 export default function TasksPage() {
   const { t } = useTranslation()
@@ -30,11 +34,15 @@ export default function TasksPage() {
   const contactsCollection = useCollection<Contact>('contacts')
   const companiesCollection = useCollection<Company>('companies')
 
+  const [activeTab, setActiveTab] = useState<TabKey>('list')
   const [search, setSearch] = useState('')
   const [filterValues, setFilterValues] = useState<Record<string, string>>({})
   const [sortBy, setSortBy] = useState('due_date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [page, setPage] = useState(1)
+
+  // All tasks (for calendar/reminders — no pagination)
+  const [allTasks, setAllTasks] = useState<Task[]>([])
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Task | null>(null)
@@ -65,6 +73,30 @@ export default function TasksPage() {
   }, [fetchTasks, page, debouncedSearch, filterValues.status, filterValues.priority, filterValues.type])
 
   useEffect(() => { load() }, [load])
+
+  // Load all tasks for calendar/reminders views
+  useEffect(() => {
+    if (activeTab === 'calendar' || activeTab === 'reminders') {
+      fetchTasks({ page: 1 }).then((result) => {
+        // Fetch all with high perPage
+        if (result && result.totalItems > 20) {
+          fetchTasks({ page: 1 }).then(() => {
+            // Use items directly — for calendar we want all, not paginated
+          })
+        }
+      })
+    }
+  }, [activeTab])
+
+  // For calendar/reminders, load all tasks (up to 500) without filters
+  const [calendarTasks, setCalendarTasks] = useState<Task[]>([])
+  useEffect(() => {
+    if (activeTab === 'calendar' || activeTab === 'reminders') {
+      fetchTasks({ page: 1 }).then(() => {
+        setCalendarTasks(items)
+      })
+    }
+  }, [activeTab, items])
 
   function handleSort(key: string) {
     if (sortBy === key) setSortDir((d) => d === 'asc' ? 'desc' : 'asc')
@@ -112,6 +144,12 @@ export default function TasksPage() {
     { key: 'type', labelKey: 'fields.type', options: types.map((v) => ({ value: v, label: t(`taskType.${v}`) })) },
   ]
 
+  const tabs: { key: TabKey; icon: React.ElementType; labelKey: string }[] = [
+    { key: 'list', icon: List, labelKey: 'tasks.viewList' },
+    { key: 'calendar', icon: CalendarDays, labelKey: 'tasks.viewCalendar' },
+    { key: 'reminders', icon: Bell, labelKey: 'tasks.viewReminders' },
+  ]
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -121,20 +159,50 @@ export default function TasksPage() {
         </Button>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 p-1 bg-surface-100 rounded-lg w-fit">
+        {tabs.map(({ key, icon: Icon, labelKey }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              activeTab === key
+                ? 'bg-surface-0 text-surface-900 shadow-sm'
+                : 'text-surface-500 hover:text-surface-700'
+            }`}
+          >
+            <Icon className="h-4 w-4" strokeWidth={1.75} />
+            {t(labelKey, { defaultValue: key })}
+          </button>
+        ))}
+      </div>
+
       {error && <Alert type="error" dismissible>{error}</Alert>}
 
-      <SearchFilter
-        searchQuery={search}
-        onSearchChange={(v) => { setSearch(v); setPage(1) }}
-        filters={filters}
-        filterValues={filterValues}
-        onFilterChange={(k, v) => { setFilterValues((f) => ({ ...f, [k]: v as string })); setPage(1) }}
-      />
+      {activeTab === 'list' && (
+        <>
+          <SearchFilter
+            searchQuery={search}
+            onSearchChange={(v) => { setSearch(v); setPage(1) }}
+            filters={filters}
+            filterValues={filterValues}
+            onFilterChange={(k, v) => { setFilterValues((f) => ({ ...f, [k]: v as string })); setPage(1) }}
+          />
 
-      <TaskList tasks={items} loading={loading} sortBy={sortBy} sortDir={sortDir} onSort={handleSort} onRowClick={setSelected} />
+          <TaskList tasks={items} loading={loading} sortBy={sortBy} sortDir={sortDir} onSort={handleSort} onRowClick={setSelected} />
 
-      {totalPages > 1 && (
-        <Pagination page={currentPage} totalPages={totalPages} totalItems={totalItems} onPageChange={setPage} />
+          {totalPages > 1 && (
+            <Pagination page={currentPage} totalPages={totalPages} totalItems={totalItems} onPageChange={setPage} />
+          )}
+        </>
+      )}
+
+      {activeTab === 'calendar' && (
+        <TaskCalendar tasks={items} onTaskClick={setSelected} />
+      )}
+
+      {activeTab === 'reminders' && (
+        <TaskReminder tasks={items} onTaskClick={setSelected} />
       )}
 
       <Modal

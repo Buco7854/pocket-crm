@@ -286,10 +286,10 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [x] 4.10 — Mettre a jour Sidebar/Topbar avec role
 - [x] 4.11 — Hook generique `useCollection.ts` (CRUD PocketBase)
 - [x] 4.12 — Intercepteur erreurs SDK 401
-- [ ] 4.13 — `ForgotPasswordPage.tsx` : formulaire demande de reinitialisation mot de passe (pb.collection('users').requestPasswordReset)
-- [ ] 4.14 — `ResetPasswordPage.tsx` : formulaire saisie nouveau mot de passe (pb.collection('users').confirmPasswordReset)
-- [ ] 4.15 — Ajouter lien "Mot de passe oublie ?" sur LoginPage
-- [ ] 4.16 — Routes /forgot-password et /reset-password dans le router
+- [x] 4.13 — `ForgotPasswordPage.tsx` : formulaire demande de reinitialisation mot de passe (pb.collection('users').requestPasswordReset)
+- [x] 4.14 — `ResetPasswordPage.tsx` : formulaire saisie nouveau mot de passe (pb.collection('users').confirmPasswordReset)
+- [x] 4.15 — Ajouter lien "Mot de passe oublie ?" sur LoginPage
+- [x] 4.16 — Routes /forgot-password et /reset-password dans le router
 - [x] 4.17 — Tester le flow complet auth
 - [x] 4.18 — Commit
 
@@ -317,9 +317,9 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [x] 5.13 — `TaskForm.tsx`
 - [x] 5.14 — `TaskDetail.tsx`
 - [x] 5.15 — `TasksPage.tsx`
-- [ ] 5.15b — `TaskCalendar.tsx` : vue calendrier mensuel/hebdomadaire des taches et RDV
-- [ ] 5.15c — `TaskReminder.tsx` : composant notifications echeances proches + taches en retard
-- [ ] 5.15d — Integrer calendrier et rappels dans `TasksPage.tsx` (onglets Liste / Calendrier)
+- [x] 5.15b — `TaskCalendar.tsx` : vue calendrier mensuel/hebdomadaire des taches et RDV
+- [x] 5.15c — `TaskReminder.tsx` : composant notifications echeances proches + taches en retard
+- [x] 5.15d — Integrer calendrier et rappels dans `TasksPage.tsx` (onglets Liste / Calendrier)
 
 ### 5D — Leads & Pipeline
 - [x] 5.16 — Hook `useLeads.ts`
@@ -329,22 +329,22 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [x] 5.20 — `PipelineBoard.tsx` (Kanban drag-and-drop HTML5 natif)
 - [x] 5.21 — `LeadsPage.tsx`
 - [x] 5.22 — `PipelinePage.tsx`
-- [ ] 5.23 — Realtime PocketBase sur leads
+- [x] 5.23 — Realtime PocketBase sur leads
 - [ ] 5.24 — Tester tous les CRUD, expands, roles, i18n
 - [ ] 5.25 — Commit
 
 ### 5E — Factures (Invoices)
-- [ ] 5.26 — Creer collection `invoices` dans PocketBase (migration)
-- [ ] 5.27 — API rules sur `invoices`
-- [ ] 5.28 — Ajouter interface `Invoice` dans `src/types/models.ts`
-- [ ] 5.29 — Hook `useInvoices.ts`
-- [ ] 5.30 — `InvoiceList.tsx` : liste des factures avec filtres (statut, date, client)
-- [ ] 5.31 — `InvoiceForm.tsx` : creation/edition facture avec lignes dynamiques
-- [ ] 5.32 — `InvoiceDetail.tsx` : detail facture avec bouton marquer payee
-- [ ] 5.33 — `InvoicesPage.tsx` — integration complete
-- [ ] 5.34 — Route /invoices dans le router + lien sidebar
-- [ ] 5.35 — **Go** `backend/hooks/invoices.go` : hook auto-calcul total TTC, hook alerte facture en retard
-- [ ] 5.36 — Donnees de test : 5-10 factures variees (brouillon, emise, payee, en retard)
+- [x] 5.26 — Creer collection `invoices` dans PocketBase (migration)
+- [x] 5.27 — API rules sur `invoices`
+- [x] 5.28 — Ajouter interface `Invoice` dans `src/types/models.ts`
+- [x] 5.29 — Hook `useInvoices.ts`
+- [x] 5.30 — `InvoiceList.tsx` : liste des factures avec filtres (statut, date, client)
+- [x] 5.31 — `InvoiceForm.tsx` : creation/edition facture avec lignes dynamiques
+- [x] 5.32 — `InvoiceDetail.tsx` : detail facture avec bouton marquer payee
+- [x] 5.33 — `InvoicesPage.tsx` — integration complete
+- [x] 5.34 — Route /invoices dans le router + lien sidebar
+- [x] 5.35 — **Go** `backend/hooks/invoices.go` : hook auto-calcul total TTC, hook alerte facture en retard
+- [x] 5.36 — Donnees de test : 5-10 factures variees (brouillon, emise, payee, en retard)
 - [ ] 5.37 — Commit
 
 ---

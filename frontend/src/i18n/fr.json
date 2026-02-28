@@ -10,8 +10,42 @@
     "leads": "Opportunités",
     "pipeline": "Pipeline",
     "tasks": "Tâches",
+    "invoices": "Factures",
     "email": "Email",
     "settings": "Paramètres"
+  },
+  "invoiceStatus": {
+    "brouillon": "Brouillon",
+    "emise": "Émise",
+    "payee": "Payée",
+    "en_retard": "En retard",
+    "annulee": "Annulée"
+  },
+  "invoices": {
+    "invoice": "Facture",
+    "number": "Numéro",
+    "amountHT": "Montant HT",
+    "totalTTC": "Total TTC",
+    "taxRate": "TVA",
+    "issuedAt": "Date d'émission",
+    "dueAt": "Date d'échéance",
+    "paidAt": "Date de paiement",
+    "items": "Lignes",
+    "addLine": "Ajouter une ligne",
+    "qty": "Qté",
+    "unitPrice": "Prix unit.",
+    "lineTotal": "Total ligne",
+    "noItems": "Ajoutez au moins une ligne",
+    "markPaid": "Marquer payée"
+  },
+  "tasks": {
+    "viewList": "Liste",
+    "viewCalendar": "Calendrier",
+    "viewReminders": "Rappels",
+    "overdue": "En retard",
+    "dueToday": "À faire aujourd'hui",
+    "dueSoon": "À venir (48h)",
+    "noReminders": "Aucun rappel — toutes les tâches sont à jour."
   },
   "auth": {
     "login": "Connexion",
@@ -20,14 +54,24 @@
     "email": "Adresse email",
     "password": "Mot de passe",
     "confirmPassword": "Confirmer le mot de passe",
+    "newPassword": "Nouveau mot de passe",
     "name": "Nom complet",
     "forgotPassword": "Mot de passe oublié ?",
+    "forgotPasswordHint": "Entrez votre email pour recevoir un lien de réinitialisation.",
     "noAccount": "Pas encore de compte ?",
     "hasAccount": "Déjà un compte ?",
     "signIn": "Se connecter",
     "signUp": "S'inscrire",
     "continueWith": "Continuer avec {provider}",
-    "orEmail": "ou par email"
+    "orEmail": "ou par email",
+    "sendResetLink": "Envoyer le lien",
+    "resetEmailSent": "Un email a été envoyé à {{email}}. Vérifiez votre boîte de réception.",
+    "backToLogin": "Retour à la connexion",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "passwordResetSuccess": "Mot de passe réinitialisé avec succès. Vous pouvez maintenant vous connecter.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "resetError": "Une erreur est survenue. Vérifiez le lien ou réessayez.",
+    "invalidResetToken": "Le lien de réinitialisation est invalide ou expiré."
   },
   "common": {
     "save": "Enregistrer",
@@ -78,6 +122,8 @@
     "leads": "Opportunités",
     "task": "Tâche",
     "tasks": "Tâches",
+    "invoice": "Facture",
+    "invoices": "Factures",
     "activity": "Activité",
     "activities": "Activités",
     "emailTemplate": "Modèle d'email",
@@ -212,6 +258,7 @@
     "companies": "Aucune entreprise pour le moment",
     "leads": "Aucune opportunité pour le moment",
     "tasks": "Aucune tâche pour le moment",
+    "invoices": "Aucune facture pour le moment",
     "activities": "Aucune activité récente"
   },
   "dashboard": {

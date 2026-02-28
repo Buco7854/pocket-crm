@@ -81,7 +81,10 @@ export default function LoginPage() {
               <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('auth.email')} className="w-full h-9 rounded-lg border border-surface-200 bg-surface-0 px-3 text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" />
             </div>
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-surface-700">{t('auth.password')}</label>
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-surface-700">{t('auth.password')}</label>
+                <Link to="/forgot-password" className="text-xs text-primary-600 hover:text-primary-700 font-medium">{t('auth.forgotPassword')}</Link>
+              </div>
               <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('auth.password')} className="w-full h-9 rounded-lg border border-surface-200 bg-surface-0 px-3 text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all" />
             </div>
             <button type="submit" disabled={loading} className="w-full h-10 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 active:bg-primary-800 transition-colors shadow-sm shadow-primary-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
