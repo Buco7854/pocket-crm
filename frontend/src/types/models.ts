@@ -157,7 +157,7 @@ export interface EmailTemplate extends BaseModel {
 }
 
 /** Email log statuses */
-export type EmailLogStatus = 'envoye' | 'echoue' | 'en_attente'
+export type EmailLogStatus = 'envoye' | 'echoue' | 'en_attente' | 'ouvert' | 'clique'
 
 export interface EmailLog extends BaseModel {
   template: string
@@ -166,8 +166,13 @@ export interface EmailLog extends BaseModel {
   subject: string
   status: EmailLogStatus
   sent_at: string
+  opened_at: string
+  clicked_at: string
+  open_count: number
+  click_count: number
   error_message: string
   sent_by: string
+  campaign_id: string
 }
 
 /** Activity types */

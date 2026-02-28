@@ -1,7 +1,13 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pencil, Trash2, Mail, Phone, Building2, User } from 'lucide-react'
+import { Pencil, Trash2, Mail, Phone, Building2, User, Send } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
+import Modal from '@/components/ui/Modal'
+import Select from '@/components/ui/Select'
+import Alert from '@/components/ui/Alert'
+import { useEmailTemplates } from '@/hooks/useEmailTemplates'
+import pb from '@/lib/pocketbase'
 import type { Contact, ContactTag } from '@/types/models'
 import type { BadgeVariant } from '@/components/ui/Badge'
 
@@ -21,6 +27,40 @@ export default function ContactDetail({ contact, onEdit, onDelete, canEdit, canD
   const { t, i18n } = useTranslation()
   const fmt = (date: string) => date ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(date)) : '—'
 
+  const { items: templates, fetchTemplates } = useEmailTemplates()
+  const [emailOpen, setEmailOpen] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState('')
+  const [sendLoading, setSendLoading] = useState(false)
+  const [sendError, setSendError] = useState<string | null>(null)
+  const [sendSuccess, setSendSuccess] = useState<string | null>(null)
+
+  function openEmailModal() {
+    setSelectedTemplate('')
+    setSendError(null)
+    setSendSuccess(null)
+    fetchTemplates()
+    setEmailOpen(true)
+  }
+
+  async function handleSendEmail() {
+    if (!selectedTemplate) { setSendError(t('email.selectTemplate')); return }
+    setSendLoading(true)
+    setSendError(null)
+    setSendSuccess(null)
+    try {
+      await pb.send('/api/crm/send-email', {
+        method: 'POST',
+        body: JSON.stringify({ template_id: selectedTemplate, contact_id: contact.id }),
+        headers: { 'Content-Type': 'application/json' },
+      })
+      setSendSuccess(t('email.sentSuccess'))
+    } catch (err: any) {
+      setSendError(err?.message || t('email.sendFailed'))
+    } finally {
+      setSendLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -34,6 +74,11 @@ export default function ContactDetail({ contact, onEdit, onDelete, canEdit, canD
           )}
         </div>
         <div className="flex items-center gap-2 flex-wrap shrink-0">
+          {contact.email && (
+            <Button variant="secondary" size="sm" icon={<Send className="h-3.5 w-3.5" />} onClick={openEmailModal}>
+              {t('email.sendEmail')}
+            </Button>
+          )}
           {canEdit && <Button variant="secondary" size="sm" icon={<Pencil className="h-3.5 w-3.5" />} onClick={onEdit}>{t('common.edit')}</Button>}
           {canDelete && <Button variant="danger" size="sm" icon={<Trash2 className="h-3.5 w-3.5" />} onClick={onDelete}>{t('common.delete')}</Button>}
         </div>
@@ -77,6 +122,48 @@ export default function ContactDetail({ contact, onEdit, onDelete, canEdit, canD
           <p className="text-sm text-surface-600 whitespace-pre-wrap">{contact.notes}</p>
         </div>
       )}
+
+      {/* Send Email Modal */}
+      <Modal
+        open={emailOpen}
+        onClose={() => setEmailOpen(false)}
+        title={t('email.sendEmail')}
+        size="md"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setEmailOpen(false)}>{t('common.cancel')}</Button>
+            <Button
+              onClick={handleSendEmail}
+              loading={sendLoading}
+              icon={<Send className="h-4 w-4" />}
+              disabled={!!sendSuccess}
+            >
+              {t('email.send')}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          {sendError && <Alert type="error">{sendError}</Alert>}
+          {sendSuccess && <Alert type="success">{sendSuccess}</Alert>}
+
+          <div className="text-sm text-surface-600 bg-surface-50 rounded-lg px-3 py-2">
+            <span className="font-medium">{t('email.to')}:</span>{' '}
+            <span>{contact.first_name} {contact.last_name}</span>
+            {contact.email && <span className="text-surface-400 ml-1">&lt;{contact.email}&gt;</span>}
+          </div>
+
+          <Select
+            label={t('entities.emailTemplate')}
+            value={selectedTemplate}
+            onChange={setSelectedTemplate}
+            options={[
+              { value: '', label: `— ${t('email.selectTemplate')} —` },
+              ...templates.map((tpl) => ({ value: tpl.id, label: tpl.name })),
+            ]}
+          />
+        </div>
+      </Modal>
     </div>
   )
 }

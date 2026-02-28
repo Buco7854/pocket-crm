@@ -227,7 +227,47 @@
   "emailLogStatus": {
     "envoye": "Envoyé",
     "echoue": "Échoué",
-    "en_attente": "En attente"
+    "en_attente": "En attente",
+    "ouvert": "Ouvert",
+    "clique": "Cliqué"
+  },
+  "email": {
+    "pageDescription": "Gérez vos modèles d'emails, campagnes et suivez vos performances.",
+    "tabs": {
+      "templates": "Modèles",
+      "campaigns": "Campagnes",
+      "history": "Historique",
+      "stats": "Statistiques"
+    },
+    "sendEmail": "Envoyer un email",
+    "send": "Envoyer",
+    "to": "À",
+    "selectTemplate": "Sélectionnez un modèle",
+    "sentSuccess": "Email envoyé avec succès !",
+    "sendFailed": "Échec de l'envoi de l'email.",
+    "saveFailed": "Échec de l'enregistrement du modèle.",
+    "templatesHint": "Créez et gérez vos modèles d'emails réutilisables.",
+    "campaignsHint": "Envoyez des emails en masse à vos contacts.",
+    "newCampaign": "Nouvelle campagne",
+    "sendCampaign": "Envoyer la campagne",
+    "campaignSent": "Campagne envoyée : {{sent}} envoyés, {{failed}} échecs. ID : {{id}}",
+    "selectContacts": "Sélectionnez au moins un contact.",
+    "campaignId": "ID Campagne",
+    "recipients": "destinataires",
+    "sent": "envoyés",
+    "failed": "échecs",
+    "opens": "Ouvertures",
+    "clicks": "Clics",
+    "sentAt": "Date d'envoi",
+    "globalStats": "Statistiques globales",
+    "perCampaign": "Par campagne",
+    "totalSent": "Emails envoyés",
+    "openRate": "Taux d'ouverture",
+    "clickRate": "Taux de clic",
+    "details": "Détails",
+    "preview": "Aperçu",
+    "htmlPreview": "Aperçu HTML",
+    "bodyPlaceholder": "<p>Bonjour {{first_name}},</p><p>...</p>"
   },
   "activityType": {
     "creation": "Création",
@@ -259,7 +299,11 @@
     "leads": "Aucune opportunité pour le moment",
     "tasks": "Aucune tâche pour le moment",
     "invoices": "Aucune facture pour le moment",
-    "activities": "Aucune activité récente"
+    "activities": "Aucune activité récente",
+    "emailTemplates": "Aucun modèle d'email pour le moment",
+    "emailLogs": "Aucun email envoyé pour le moment",
+    "campaigns": "Aucune campagne pour le moment",
+    "emailStats": "Aucune statistique disponible pour le moment"
   },
   "dashboard": {
     "welcome": "Bienvenue",
