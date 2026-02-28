@@ -352,29 +352,29 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 ## Phase 6 : Automatisation Email & Suivi Performance
 
 ### 6A — Envoi d'emails
-- [ ] 6.1 — Configurer SMTP dans PocketBase Admin (Brevo ou autre)
-- [ ] 6.2 — `EmailTemplateEditor.tsx` : editeur de modeles email personnalisables
-- [ ] 6.3 — `EmailCampaignList.tsx` : liste des campagnes avec statuts
-- [ ] 6.4 — `EmailPage.tsx` (onglets Modeles + Campagnes + Historique + Statistiques)
-- [ ] 6.5 — Bouton "Envoyer Email" sur ContactDetail
-- [ ] 6.6 — Action frontend appel route custom
-- [ ] 6.7 — **Go** `backend/hooks/email.go` : route POST /api/crm/send-email
-- [ ] 6.8 — **Go** `backend/services/email_service.go`
-- [ ] 6.9 — **Go** `backend/hooks/leads.go` : hooks lifecycle (creation activity auto)
-- [ ] 6.10 — **Go** Hook welcome email a l'inscription
-- [ ] 6.11 — **Go** Hook notification assignation lead
-- [ ] 6.12 — **Go** Route POST /api/crm/send-campaign : envoi en masse a une liste de contacts
-- [ ] 6.13 — Enregistrer hooks dans `main.go`
+- [x] 6.1 — Configurer SMTP dans PocketBase Admin (Brevo ou autre)
+- [x] 6.2 — `EmailTemplateEditor.tsx` : editeur de modeles email personnalisables
+- [x] 6.3 — `EmailCampaignList.tsx` : liste des campagnes avec statuts
+- [x] 6.4 — `EmailPage.tsx` (onglets Modeles + Campagnes + Historique + Statistiques)
+- [x] 6.5 — Bouton "Envoyer Email" sur ContactDetail
+- [x] 6.6 — Action frontend appel route custom
+- [x] 6.7 — **Go** `backend/hooks/email.go` : route POST /api/crm/send-email
+- [x] 6.8 — **Go** `backend/services/email_service.go`
+- [x] 6.9 — **Go** `backend/hooks/leads.go` : hooks lifecycle (creation activity auto)
+- [x] 6.10 — **Go** Hook welcome email a l'inscription
+- [x] 6.11 — **Go** Hook notification assignation lead
+- [x] 6.12 — **Go** Route POST /api/crm/send-campaign : envoi en masse a une liste de contacts
+- [x] 6.13 — Enregistrer hooks dans `main.go`
 
 ### 6B — Suivi et analyse des performances email
-- [ ] 6.14 — **Go** Route GET /api/crm/email/track-open/:logId : pixel tracking ouverture (met a jour opened_at, open_count dans email_logs)
-- [ ] 6.15 — **Go** Route GET /api/crm/email/track-click/:logId : redirect tracking clic (met a jour clicked_at, click_count dans email_logs)
-- [ ] 6.16 — Injecter pixel tracking et liens trackes dans les emails envoyes (email_service.go)
-- [ ] 6.17 — `EmailStats.tsx` : composant statistiques campagne (taux ouverture, taux clic, bounces)
-- [ ] 6.18 — **Go** Route GET /api/crm/email/campaign-stats/:campaignId : stats agregees par campagne
-- [ ] 6.19 — Integrer EmailStats dans EmailPage (onglet Statistiques)
-- [ ] 6.20 — Tester tous les flux email (envoi unitaire, campagne, tracking, stats)
-- [ ] 6.21 — Commit
+- [x] 6.14 — **Go** Route GET /api/crm/email/track-open/:logId : pixel tracking ouverture (met a jour opened_at, open_count dans email_logs)
+- [x] 6.15 — **Go** Route GET /api/crm/email/track-click/:logId : redirect tracking clic (met a jour clicked_at, click_count dans email_logs)
+- [x] 6.16 — Injecter pixel tracking et liens trackes dans les emails envoyes (email_service.go)
+- [x] 6.17 — `EmailStats.tsx` : composant statistiques campagne (taux ouverture, taux clic, bounces)
+- [x] 6.18 — **Go** Route GET /api/crm/email/campaign-stats/:campaignId : stats agregees par campagne
+- [x] 6.19 — Integrer EmailStats dans EmailPage (onglet Statistiques)
+- [x] 6.20 — Tester tous les flux email (envoi unitaire, campagne, tracking, stats)
+- [x] 6.21 — Commit
 
 ---
 

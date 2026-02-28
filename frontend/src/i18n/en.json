@@ -227,7 +227,47 @@
   "emailLogStatus": {
     "envoye": "Sent",
     "echoue": "Failed",
-    "en_attente": "Pending"
+    "en_attente": "Pending",
+    "ouvert": "Opened",
+    "clique": "Clicked"
+  },
+  "email": {
+    "pageDescription": "Manage your email templates, campaigns and track performance.",
+    "tabs": {
+      "templates": "Templates",
+      "campaigns": "Campaigns",
+      "history": "History",
+      "stats": "Statistics"
+    },
+    "sendEmail": "Send Email",
+    "send": "Send",
+    "to": "To",
+    "selectTemplate": "Select a template",
+    "sentSuccess": "Email sent successfully!",
+    "sendFailed": "Failed to send email.",
+    "saveFailed": "Failed to save template.",
+    "templatesHint": "Create and manage reusable email templates.",
+    "campaignsHint": "Send bulk emails to your contacts.",
+    "newCampaign": "New Campaign",
+    "sendCampaign": "Send Campaign",
+    "campaignSent": "Campaign sent: {{sent}} sent, {{failed}} failed. ID: {{id}}",
+    "selectContacts": "Select at least one contact.",
+    "campaignId": "Campaign ID",
+    "recipients": "recipients",
+    "sent": "sent",
+    "failed": "failed",
+    "opens": "Opens",
+    "clicks": "Clicks",
+    "sentAt": "Sent at",
+    "globalStats": "Global statistics",
+    "perCampaign": "Per campaign",
+    "totalSent": "Emails sent",
+    "openRate": "Open rate",
+    "clickRate": "Click rate",
+    "details": "Details",
+    "preview": "Preview",
+    "htmlPreview": "HTML preview",
+    "bodyPlaceholder": "<p>Hello {{first_name}},</p><p>...</p>"
   },
   "activityType": {
     "creation": "Creation",
@@ -259,7 +299,11 @@
     "leads": "No leads yet",
     "tasks": "No tasks yet",
     "invoices": "No invoices yet",
-    "activities": "No recent activity"
+    "activities": "No recent activity",
+    "emailTemplates": "No email templates yet",
+    "emailLogs": "No emails sent yet",
+    "campaigns": "No campaigns yet",
+    "emailStats": "No statistics available yet"
   },
   "dashboard": {
     "welcome": "Welcome",

@@ -31,9 +31,11 @@ func main() {
 	// Phase 5 — Invoice hooks (auto-calculate TTC total + overdue check)
 	hooks.RegisterInvoiceHooks(app)
 
-	// Phase 6 hooks will be registered here:
-	// hooks.RegisterLeadHooks(app)
-	// hooks.RegisterEmailRoutes(app)
+	// Phase 6 — Lead lifecycle hooks (activity tracking + owner notifications)
+	hooks.RegisterLeadHooks(app)
+
+	// Phase 6 — Email API routes + welcome hook
+	hooks.RegisterEmailRoutes(app)
 
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
