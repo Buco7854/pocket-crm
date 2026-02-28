@@ -15,7 +15,20 @@ Projet d'etudes : CRM web. Ce document sert de tracker de progression — cocher
 ```
 pocket-crm/
 ├── docker-compose.yml
+├── docker-compose.prod.yml
 ├── .env / .env.example / .gitignore / README.md
+├── .github/
+│   └── workflows/
+│       └── ci.yml               # GitHub Actions CI/CD pipeline
+│
+├── docs/                        # Rapport de projet & livrables documentaires
+│   ├── rapport.md               # Rapport de projet complet
+│   ├── analyse-besoins.md       # Analyse des besoins
+│   ├── use-case-diagram.png     # Diagramme UML Use Case
+│   ├── mcd-diagram.png          # Modele Conceptuel de Donnees (Merise)
+│   ├── architecture.md          # Architecture technique + diagramme
+│   ├── fonctionnalites.md       # Description des fonctionnalites
+│   └── workflow-pipeline.md     # Justification du workflow et pipeline choisis
 │
 ├── backend/
 │   ├── main.go                # Point d'entree Go custom (importe PocketBase comme lib)
@@ -24,7 +37,8 @@ pocket-crm/
 │   ├── hooks/
 │   │   ├── email.go           # Routes/hooks custom email
 │   │   ├── leads.go           # Hooks lifecycle leads + activities
-│   │   └── tasks.go           # Hooks rappels taches
+│   │   ├── tasks.go           # Hooks rappels taches
+│   │   └── invoices.go        # Hooks facturation
 │   ├── services/
 │   │   └── email_service.go   # Logique envoi email reutilisable
 │   ├── pb_migrations/         # Migrations schema auto-generees
@@ -38,7 +52,7 @@ pocket-crm/
         ├── router/index.tsx              # React Router v7 (createBrowserRouter)
         ├── lib/pocketbase.ts             # SDK singleton type
         ├── types/
-        │   ├── models.ts                 # Interfaces TS (User, Contact, Company, Lead, Task, etc.)
+        │   ├── models.ts                 # Interfaces TS (User, Contact, Company, Lead, Task, Invoice, etc.)
         │   └── pocketbase.ts             # Types expand PocketBase
         ├── i18n/
         │   ├── index.ts                  # Config react-i18next
@@ -46,7 +60,7 @@ pocket-crm/
         │   └── en.json                   # Traductions anglaises
         ├── store/
         │   └── authStore.ts              # Zustand auth store
-        ├── hooks/                        # useAuth, useTheme, useCollection, etc.
+        ├── hooks/                        # useAuth, useTheme, useCollection, useInvoices, etc.
         ├── components/
         │   ├── layout/   (AppLayout, AppSidebar, AppTopbar, AppBreadcrumb, ThemeSwitcher, LocaleSwitcher)
         │   ├── ui/       (Button, Input, Select, Modal, Table, Card, Badge, Alert, Pagination, SearchFilter)
@@ -54,9 +68,14 @@ pocket-crm/
         │   ├── companies/(CompanyList, CompanyForm, CompanyDetail)
         │   ├── leads/    (LeadList, LeadForm, LeadDetail, PipelineBoard)
         │   ├── tasks/    (TaskList, TaskForm, TaskCalendar, TaskReminder)
-        │   ├── dashboard/(KpiCard, RevenueChart, ConversionFunnel, ActivityFeed)
-        │   └── email/    (EmailTemplateEditor, EmailCampaignList)
-        └── pages/        (LoginPage, RegisterPage, DashboardPage, ContactsPage, CompaniesPage, LeadsPage, PipelinePage, TasksPage, EmailPage, SettingsPage)
+        │   ├── invoices/ (InvoiceList, InvoiceForm, InvoiceDetail)
+        │   ├── dashboard/(KpiCard, RevenueChart, ConversionFunnel, ActivityFeed,
+        │   │              SalesStats, ClientStats, CommercialLeaderboard,
+        │   │              MarketingStats, FinancialStats)
+        │   └── email/    (EmailTemplateEditor, EmailCampaignList, EmailStats)
+        └── pages/        (LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage,
+                           DashboardPage, ContactsPage, CompaniesPage, LeadsPage,
+                           PipelinePage, TasksPage, InvoicesPage, EmailPage, SettingsPage)
 ```
 
 ---
@@ -119,22 +138,41 @@ pocket-crm/
 | assignee, created_by | Relation -> users | |
 | contact, lead, company | Relations optionnelles | |
 
+### `invoices`
+| Champ | Type | Notes |
+|-------|------|-------|
+| number | TextField | Required, unique (ex: FAC-2026-001) |
+| contact | Relation -> contacts | Client facture |
+| company | Relation -> companies | Entreprise facturee |
+| lead | Relation -> leads | Lead associe (optionnel) |
+| owner | Relation -> users | Commercial responsable |
+| amount | NumberField | Montant HT |
+| tax_rate | NumberField | Taux TVA (%) |
+| total | NumberField | Montant TTC |
+| status | SelectField | `brouillon`, `emise`, `payee`, `en_retard`, `annulee` |
+| issued_at | DateField | Date d'emission |
+| due_at | DateField | Date d'echeance |
+| paid_at | DateField | Date de paiement effectif |
+| items | JSONField | Lignes de facture [{description, qty, unit_price}] |
+| notes | EditorField | Optional |
+
 ### `email_templates`
 name, subject, body (EditorField), type (marketing/transactionnel/relance/bienvenue), active (bool), created_by -> users
 
 ### `email_logs`
-template -> email_templates, recipient_email, recipient_contact -> contacts, subject, status (envoye/echoue/en_attente), sent_at, error_message, sent_by -> users. **Ecriture par hooks Go uniquement.**
+template -> email_templates, recipient_email, recipient_contact -> contacts, subject, status (envoye/echoue/en_attente/ouvert/clique), sent_at, opened_at, clicked_at, open_count (NumberField), click_count (NumberField), error_message, sent_by -> users, campaign_id (TextField, optionnel — pour grouper les envois d'une campagne). **Ecriture par hooks Go uniquement.**
 
 ### `activities`
 type (creation/modification/email/appel/note/statut_change), description, user -> users, contact/lead/company (optionnels), metadata (JSON). **Ecriture par hooks Go uniquement.**
 
 ### Regles API (resume)
 - **Lecture** : tout utilisateur authentifie
-- **Creation contacts/companies/leads** : admin ou commercial
+- **Creation contacts/companies/leads/invoices** : admin ou commercial
 - **Creation tasks** : tout authentifie
 - **Modification** : admin ou owner/assignee
 - **Suppression** : admin uniquement
 - **email_logs / activities** : lecture seule (ecriture par hooks Go)
+- **invoices** : creation/modification admin ou commercial owner ; suppression admin uniquement
 
 ---
 
@@ -248,8 +286,12 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [x] 4.10 — Mettre a jour Sidebar/Topbar avec role
 - [x] 4.11 — Hook generique `useCollection.ts` (CRUD PocketBase)
 - [x] 4.12 — Intercepteur erreurs SDK 401
-- [x] 4.13 — Tester le flow complet auth
-- [x] 4.14 — Commit
+- [ ] 4.13 — `ForgotPasswordPage.tsx` : formulaire demande de reinitialisation mot de passe (pb.collection('users').requestPasswordReset)
+- [ ] 4.14 — `ResetPasswordPage.tsx` : formulaire saisie nouveau mot de passe (pb.collection('users').confirmPasswordReset)
+- [ ] 4.15 — Ajouter lien "Mot de passe oublie ?" sur LoginPage
+- [ ] 4.16 — Routes /forgot-password et /reset-password dans le router
+- [x] 4.17 — Tester le flow complet auth
+- [x] 4.18 — Commit
 
 ---
 
@@ -275,6 +317,9 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [x] 5.13 — `TaskForm.tsx`
 - [x] 5.14 — `TaskDetail.tsx`
 - [x] 5.15 — `TasksPage.tsx`
+- [ ] 5.15b — `TaskCalendar.tsx` : vue calendrier mensuel/hebdomadaire des taches et RDV
+- [ ] 5.15c — `TaskReminder.tsx` : composant notifications echeances proches + taches en retard
+- [ ] 5.15d — Integrer calendrier et rappels dans `TasksPage.tsx` (onglets Liste / Calendrier)
 
 ### 5D — Leads & Pipeline
 - [x] 5.16 — Hook `useLeads.ts`
@@ -288,46 +333,121 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [ ] 5.24 — Tester tous les CRUD, expands, roles, i18n
 - [ ] 5.25 — Commit
 
+### 5E — Factures (Invoices)
+- [ ] 5.26 — Creer collection `invoices` dans PocketBase (migration)
+- [ ] 5.27 — API rules sur `invoices`
+- [ ] 5.28 — Ajouter interface `Invoice` dans `src/types/models.ts`
+- [ ] 5.29 — Hook `useInvoices.ts`
+- [ ] 5.30 — `InvoiceList.tsx` : liste des factures avec filtres (statut, date, client)
+- [ ] 5.31 — `InvoiceForm.tsx` : creation/edition facture avec lignes dynamiques
+- [ ] 5.32 — `InvoiceDetail.tsx` : detail facture avec bouton marquer payee
+- [ ] 5.33 — `InvoicesPage.tsx` — integration complete
+- [ ] 5.34 — Route /invoices dans le router + lien sidebar
+- [ ] 5.35 — **Go** `backend/hooks/invoices.go` : hook auto-calcul total TTC, hook alerte facture en retard
+- [ ] 5.36 — Donnees de test : 5-10 factures variees (brouillon, emise, payee, en retard)
+- [ ] 5.37 — Commit
+
 ---
 
-## Phase 6 : Automatisation Email
+## Phase 6 : Automatisation Email & Suivi Performance
 
-- [ ] 6.1 — Configurer SMTP dans PocketBase Admin
-- [ ] 6.2 — `EmailTemplateEditor.tsx`
-- [ ] 6.3 — `EmailCampaignList.tsx`
-- [ ] 6.4 — `EmailPage.tsx` (onglets Modeles + Historique)
+### 6A — Envoi d'emails
+- [ ] 6.1 — Configurer SMTP dans PocketBase Admin (Brevo ou autre)
+- [ ] 6.2 — `EmailTemplateEditor.tsx` : editeur de modeles email personnalisables
+- [ ] 6.3 — `EmailCampaignList.tsx` : liste des campagnes avec statuts
+- [ ] 6.4 — `EmailPage.tsx` (onglets Modeles + Campagnes + Historique + Statistiques)
 - [ ] 6.5 — Bouton "Envoyer Email" sur ContactDetail
 - [ ] 6.6 — Action frontend appel route custom
 - [ ] 6.7 — **Go** `backend/hooks/email.go` : route POST /api/crm/send-email
 - [ ] 6.8 — **Go** `backend/services/email_service.go`
-- [ ] 6.9 — **Go** `backend/hooks/leads.go` : hooks lifecycle
-- [ ] 6.10 — **Go** Hook welcome email
+- [ ] 6.9 — **Go** `backend/hooks/leads.go` : hooks lifecycle (creation activity auto)
+- [ ] 6.10 — **Go** Hook welcome email a l'inscription
 - [ ] 6.11 — **Go** Hook notification assignation lead
-- [ ] 6.12 — Enregistrer hooks dans `main.go`
-- [ ] 6.13 — Tester tous les flux email
-- [ ] 6.14 — Commit
+- [ ] 6.12 — **Go** Route POST /api/crm/send-campaign : envoi en masse a une liste de contacts
+- [ ] 6.13 — Enregistrer hooks dans `main.go`
+
+### 6B — Suivi et analyse des performances email
+- [ ] 6.14 — **Go** Route GET /api/crm/email/track-open/:logId : pixel tracking ouverture (met a jour opened_at, open_count dans email_logs)
+- [ ] 6.15 — **Go** Route GET /api/crm/email/track-click/:logId : redirect tracking clic (met a jour clicked_at, click_count dans email_logs)
+- [ ] 6.16 — Injecter pixel tracking et liens trackes dans les emails envoyes (email_service.go)
+- [ ] 6.17 — `EmailStats.tsx` : composant statistiques campagne (taux ouverture, taux clic, bounces)
+- [ ] 6.18 — **Go** Route GET /api/crm/email/campaign-stats/:campaignId : stats agregees par campagne
+- [ ] 6.19 — Integrer EmailStats dans EmailPage (onglet Statistiques)
+- [ ] 6.20 — Tester tous les flux email (envoi unitaire, campagne, tracking, stats)
+- [ ] 6.21 — Commit
 
 ---
 
-## Phase 7 : Dashboard Analytique
+## Phase 7 : Dashboard Analytique & Statistiques Completes
 
+### 7A — Infrastructure dashboard
 - [ ] 7.1 — Installer recharts (ou chart.js + react-chartjs-2)
-- [ ] 7.2 — Hook `useDashboard.ts`
-- [ ] 7.3 — Calculs KPI
-- [ ] 7.4 — (Optionnel) Route Go GET /api/crm/dashboard-stats
-- [ ] 7.5 — `KpiCard.tsx`
-- [ ] 7.6 — `RevenueChart.tsx`
-- [ ] 7.7 — `ConversionFunnel.tsx`
-- [ ] 7.8 — `ActivityFeed.tsx`
-- [ ] 7.9 — `DashboardPage.tsx` — integration complete
-- [ ] 7.10 — Squelettes de chargement (Skeleton)
-- [ ] 7.11 — Auto-refresh + refresh manuel
-- [ ] 7.12 — Tester avec donnees seed
-- [ ] 7.13 — Commit
+- [ ] 7.2 — Hook `useDashboard.ts` : appels API stats + state
+- [ ] 7.3 — **Go** Route GET /api/crm/dashboard-stats : calculs agreg. cote serveur (CA, conversions, pipeline, etc.)
+- [ ] 7.4 — `KpiCard.tsx` : composant carte KPI reutilisable (valeur, evolution, icone, couleur)
+- [ ] 7.5 — Squelettes de chargement (Skeleton) pour tous les widgets
+- [ ] 7.6 — Auto-refresh + refresh manuel + filtre periode (semaine / mois / trimestre / annee)
+
+### 7B — Dashboard intelligent (page d'accueil)
+- [ ] 7.7 — Widget CA du mois en cours
+- [ ] 7.8 — Widget evolution CA vs mois precedent (% et fleche)
+- [ ] 7.9 — Widget objectif atteint (%) avec barre de progression
+- [ ] 7.10 — Widget nouveaux prospects du mois
+- [ ] 7.11 — Widget RDV du jour (liste des taches type reunion pour aujourd'hui)
+- [ ] 7.12 — Widget taches urgentes / en retard
+- [ ] 7.13 — `ActivityFeed.tsx` : flux d'activite recente (derniers evenements)
+- [ ] 7.14 — `DashboardPage.tsx` — integration de tous les widgets
+
+### 7C — Statistiques commerciales (Ventes)
+- [ ] 7.15 — `SalesStats.tsx` : composant page stats commerciales
+- [ ] 7.16 — CA total par periode (mois / trimestre / annee) avec graphique evolution
+- [ ] 7.17 — CA par commercial (graphique barres)
+- [ ] 7.18 — Pipeline : nombre d'opportunites, montant total, repartition par etape (graphique barres empilees)
+- [ ] 7.19 — `ConversionFunnel.tsx` : funnel de conversion visuel (Prospect -> Qualifie -> Proposition -> Negoce -> Gagne)
+- [ ] 7.20 — Taux de conversion (Prospect -> Client, Proposition -> Vente, delai moyen de transformation)
+- [ ] 7.21 — `RevenueChart.tsx` : graphique evolution CA dans le temps (line chart)
+
+### 7D — Statistiques clients
+- [ ] 7.22 — `ClientStats.tsx` : composant page stats clients
+- [ ] 7.23 — Nombre total de clients, nouveaux clients par periode, clients actifs/inactifs
+- [ ] 7.24 — Segmentation clients : par ville, par secteur d'activite (industry), par taille d'entreprise
+- [ ] 7.25 — Panier moyen (montant moyen des leads gagnes par client)
+- [ ] 7.26 — Lifetime Value (LTV) : valeur totale par client (somme leads gagnes + factures payees)
+- [ ] 7.27 — Top clients les plus rentables (classement)
+
+### 7E — Performance des commerciaux
+- [ ] 7.28 — `CommercialLeaderboard.tsx` : classement des commerciaux
+- [ ] 7.29 — Nombre d'appels, RDV, emails par commercial (via activities)
+- [ ] 7.30 — Nombre de ventes (leads gagnes) par commercial
+- [ ] 7.31 — Taux de reussite par commercial (leads gagnes / leads totaux)
+- [ ] 7.32 — Objectifs vs Realise (si objectifs definis dans settings)
+- [ ] 7.33 — Leaderboard : classement type tableau des scores
+
+### 7F — Statistiques financieres
+- [ ] 7.34 — `FinancialStats.tsx` : composant page stats financieres
+- [ ] 7.35 — Nombre de factures emises / payees / en retard / annulees
+- [ ] 7.36 — Montant total factures payees vs impayees (graphique camembert)
+- [ ] 7.37 — Delai moyen de paiement (jours entre emission et paiement)
+- [ ] 7.38 — Previsions de revenus : leads en cours ponderes par probabilite (basee sur etape pipeline)
+
+### 7G — Statistiques marketing
+- [ ] 7.39 — `MarketingStats.tsx` : composant page stats marketing
+- [ ] 7.40 — Nombre de leads generes par periode
+- [ ] 7.41 — Source des leads (graphique camembert : site_web, email, telephone, salon, recommandation, autre)
+- [ ] 7.42 — Cout par lead (si champ budget renseigne sur campagnes)
+- [ ] 7.43 — ROI des campagnes email (leads generes vs emails envoyes)
+- [ ] 7.44 — Taux d'ouverture et taux de clic emails (depuis email_logs)
+
+### 7H — Integration et finalisation
+- [ ] 7.45 — Page `/stats` ou onglets dans DashboardPage regroupant toutes les categories
+- [ ] 7.46 — Navigation entre les sections de stats (onglets ou sous-pages)
+- [ ] 7.47 — Export des stats en CSV (bonus)
+- [ ] 7.48 — Tester avec donnees seed (verifier coherence des chiffres)
+- [ ] 7.49 — Commit
 
 ---
 
-## Phase 8 : Deploiement, Tests & Polish
+## Phase 8 : Deploiement, CI/CD, Tests & Polish
 
 ### 8A — Docker Production
 - [ ] 8.1 — `frontend/Dockerfile` production multi-stage
@@ -338,27 +458,69 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [ ] 8.6 — Injection VITE_PB_URL
 - [ ] 8.7 — Tester build production
 
-### 8B — Tests
-- [ ] 8.8 — Installer vitest, @testing-library/react, jsdom
-- [ ] 8.9 — Configurer Vitest
-- [ ] 8.10 — Tests auth store (Zustand)
-- [ ] 8.11 — Tests composants UI
-- [ ] 8.12 — Tests pipeline
-- [ ] 8.13 — Tests integration
-- [ ] 8.14 — Tests i18n completude
-- [ ] 8.15 — Scripts npm test
-- [ ] 8.16 — Executer tous les tests
+### 8B — CI/CD Pipeline (15% de la note)
+- [ ] 8.8 — Creer `.github/workflows/ci.yml` : pipeline GitHub Actions
+- [ ] 8.9 — Job lint : ESLint sur le frontend (npm run lint)
+- [ ] 8.10 — Job test : Vitest (npm run test)
+- [ ] 8.11 — Job build : build frontend (npm run build) + build Go backend
+- [ ] 8.12 — Job deploy : deploiement automatique sur push branche main (Docker build + push ou Vercel/autre)
+- [ ] 8.13 — Badges CI/CD dans le README (build status)
+- [ ] 8.14 — Strategie de branches documentee (main = production, develop = pre-production, feature branches)
 
-### 8C — Polish UX
-- [ ] 8.17 — Toast notifications i18n
-- [ ] 8.18 — Confirmation suppression i18n
-- [ ] 8.19 — Etats vides i18n
-- [ ] 8.20 — Validation formulaires i18n
-- [ ] 8.21 — Responsive mobile/tablet/desktop
-- [ ] 8.22 — Raccourcis clavier
-- [ ] 8.23 — `SettingsPage.tsx` (profil + gestion users + langue)
-- [ ] 8.24 — Persister preference langue localStorage
-- [ ] 8.25 — Favicon et titre app
-- [ ] 8.26 — README.md complet
-- [ ] 8.27 — Revue finale
-- [ ] 8.28 — Commit final
+### 8C — Tests
+- [ ] 8.15 — Installer vitest, @testing-library/react, jsdom
+- [ ] 8.16 — Configurer Vitest
+- [ ] 8.17 — Tests auth store (Zustand)
+- [ ] 8.18 — Tests composants UI
+- [ ] 8.19 — Tests pipeline
+- [ ] 8.20 — Tests integration
+- [ ] 8.21 — Tests i18n completude
+- [ ] 8.22 — Scripts npm test
+- [ ] 8.23 — Executer tous les tests
+
+### 8D — Polish UX
+- [ ] 8.24 — Toast notifications i18n
+- [ ] 8.25 — Confirmation suppression i18n
+- [ ] 8.26 — Etats vides i18n
+- [ ] 8.27 — Validation formulaires i18n
+- [ ] 8.28 — Responsive mobile/tablet/desktop
+- [ ] 8.29 — Raccourcis clavier
+- [ ] 8.30 — `SettingsPage.tsx` (profil + gestion users + langue)
+- [ ] 8.31 — Persister preference langue localStorage
+- [ ] 8.32 — Favicon et titre app
+- [ ] 8.33 — README.md complet (instructions installation, screenshots, stack, diagrammes)
+- [ ] 8.34 — Revue finale code + securite
+- [ ] 8.35 — Commit
+
+---
+
+## Phase 9 : Rapport de Projet & Documentation (10% de la note)
+
+### 9A — Analyse et modelisation
+- [ ] 9.1 — Rediger l'analyse des besoins (`docs/analyse-besoins.md`) : contexte entreprise, problematique, objectifs
+- [ ] 9.2 — Diagramme UML Use Case (`docs/use-case-diagram.png`) : acteurs (admin, commercial, standard) et cas d'utilisation
+- [ ] 9.3 — Modele Conceptuel de Donnees Merise MCD (`docs/mcd-diagram.png`) : entites, associations, cardinalites
+- [ ] 9.4 — Architecture technique (`docs/architecture.md`) : diagramme architecture (frontend, backend, BDD, services externes) + justification des choix
+
+### 9B — Documentation fonctionnelle
+- [ ] 9.5 — Description des fonctionnalites (`docs/fonctionnalites.md`) : chaque module detaille avec captures d'ecran
+- [ ] 9.6 — Documentation du workflow et pipeline de ventes choisis (`docs/workflow-pipeline.md`) : justification des etapes, originalite (bonus 5-10%)
+- [ ] 9.7 — Documentation technique dans le code : commentaires pertinents sur les parties complexes
+
+### 9C — Rapport final
+- [ ] 9.8 — Assembler le rapport complet (`docs/rapport.md`) : table des matieres, toutes les sections ci-dessus
+- [ ] 9.9 — Relecture et mise en forme
+- [ ] 9.10 — Commit documentation
+
+---
+
+## Phase 10 : Presentation & Livraison
+
+- [ ] 10.1 — Preparer le jeu de test complet : scenarios realistes (creation contacts, passage leads dans le pipeline, envoi emails, generation factures)
+- [ ] 10.2 — Peupler la BDD avec des donnees de demonstration convaincantes
+- [ ] 10.3 — Preparer la presentation orale : slides (contexte, demo, architecture, bilan)
+- [ ] 10.4 — Enregistrer une courte video de demonstration du CRM et du workflow choisi
+- [ ] 10.5 — Verifier le lien vers l'application deployee
+- [ ] 10.6 — Verifier que le depot GitHub est complet et propre (README, .env.example, pas de secrets)
+- [ ] 10.7 — Tag de release finale sur GitHub
+- [ ] 10.8 — Commit final
