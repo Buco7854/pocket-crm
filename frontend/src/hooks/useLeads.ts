@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback } from 'react'
 import pb from '@/lib/pocketbase'
 import { useCollection } from '@/hooks/useCollection'
 import type { Lead } from '@/types/models'

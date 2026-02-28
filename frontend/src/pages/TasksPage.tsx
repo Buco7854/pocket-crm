@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Plus, List, CalendarDays, Bell } from 'lucide-react'
+import Tabs, { type TabItem } from '@/components/ui/Tabs'
 import { useTasks } from '@/hooks/useTasks'
 import { useCollection } from '@/hooks/useCollection'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -30,6 +31,7 @@ export default function TasksPage() {
   const { t } = useTranslation()
   const { isAdmin, user } = useAuthStore()
   const { items, totalItems, totalPages, currentPage, loading, error, fetchTasks, create, update, remove } = useTasks()
+  const allTasksCollection = useCollection<Task>('tasks')
   const usersCollection = useCollection<User>('users')
   const contactsCollection = useCollection<Contact>('contacts')
   const companiesCollection = useCollection<Company>('companies')
@@ -40,9 +42,6 @@ export default function TasksPage() {
   const [sortBy, setSortBy] = useState('due_date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [page, setPage] = useState(1)
-
-  // All tasks (for calendar/reminders — no pagination)
-  const [allTasks, setAllTasks] = useState<Task[]>([])
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Task | null>(null)
@@ -74,29 +73,14 @@ export default function TasksPage() {
 
   useEffect(() => { load() }, [load])
 
-  // Load all tasks for calendar/reminders views
-  useEffect(() => {
-    if (activeTab === 'calendar' || activeTab === 'reminders') {
-      fetchTasks({ page: 1 }).then((result) => {
-        // Fetch all with high perPage
-        if (result && result.totalItems > 20) {
-          fetchTasks({ page: 1 }).then(() => {
-            // Use items directly — for calendar we want all, not paginated
-          })
-        }
-      })
-    }
-  }, [activeTab])
+  // Load all tasks (unpaginated) for calendar and reminders views
+  const loadAllTasks = useCallback(() => {
+    allTasksCollection.fetchList({ perPage: 1000, sort: 'due_date', expand: 'assignee,contact,company' })
+  }, [allTasksCollection.fetchList])
 
-  // For calendar/reminders, load all tasks (up to 500) without filters
-  const [calendarTasks, setCalendarTasks] = useState<Task[]>([])
   useEffect(() => {
-    if (activeTab === 'calendar' || activeTab === 'reminders') {
-      fetchTasks({ page: 1 }).then(() => {
-        setCalendarTasks(items)
-      })
-    }
-  }, [activeTab, items])
+    if (activeTab === 'calendar' || activeTab === 'reminders') loadAllTasks()
+  }, [activeTab]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleSort(key: string) {
     if (sortBy === key) setSortDir((d) => d === 'asc' ? 'desc' : 'asc')
@@ -114,6 +98,7 @@ export default function TasksPage() {
       setFormOpen(false)
       setEditing(null)
       load()
+      if (activeTab !== 'list') loadAllTasks()
     } finally {
       setFormLoading(false)
     }
@@ -128,26 +113,31 @@ export default function TasksPage() {
     } as Partial<Task>)
     setSelected(null)
     load()
+    if (activeTab !== 'list') loadAllTasks()
   }
 
   function openCreate() { setEditing(null); setFormOpen(true) }
   function openEdit() { setEditing(selected); setSelected(null); setFormOpen(true) }
   function openDelete() { if (selected) { deleteConfirm.requestDelete(selected.id, selected.title); setSelected(null) } }
 
-  async function handleDelete(id: string) { await remove(id); load() }
+  async function handleDelete(id: string) {
+    await remove(id)
+    load()
+    if (activeTab !== 'list') loadAllTasks()
+  }
 
   const canEdit = (task: Task) => isAdmin || task.assignee === user?.id || task.created_by === user?.id
 
   const filters: FilterOption[] = [
+    { key: 'type', labelKey: 'fields.type', options: types.map((v) => ({ value: v, label: t(`taskType.${v}`) })) },
     { key: 'status', labelKey: 'fields.status', options: statuses.map((v) => ({ value: v, label: t(`taskStatus.${v}`) })) },
     { key: 'priority', labelKey: 'fields.priority', options: priorities.map((v) => ({ value: v, label: t(`priority.${v}`) })) },
-    { key: 'type', labelKey: 'fields.type', options: types.map((v) => ({ value: v, label: t(`taskType.${v}`) })) },
   ]
 
-  const tabs: { key: TabKey; icon: React.ElementType; labelKey: string }[] = [
-    { key: 'list', icon: List, labelKey: 'tasks.viewList' },
-    { key: 'calendar', icon: CalendarDays, labelKey: 'tasks.viewCalendar' },
-    { key: 'reminders', icon: Bell, labelKey: 'tasks.viewReminders' },
+  const tabs: TabItem<TabKey>[] = [
+    { key: 'list', label: t('tasks.viewList'), icon: <List className="h-4 w-4" strokeWidth={1.75} /> },
+    { key: 'calendar', label: t('tasks.viewCalendar'), icon: <CalendarDays className="h-4 w-4" strokeWidth={1.75} /> },
+    { key: 'reminders', label: t('tasks.viewReminders'), icon: <Bell className="h-4 w-4" strokeWidth={1.75} /> },
   ]
 
   return (
@@ -159,23 +149,7 @@ export default function TasksPage() {
         </Button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-surface-100 rounded-lg w-fit">
-        {tabs.map(({ key, icon: Icon, labelKey }) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              activeTab === key
-                ? 'bg-surface-0 text-surface-900 shadow-sm'
-                : 'text-surface-500 hover:text-surface-700'
-            }`}
-          >
-            <Icon className="h-4 w-4" strokeWidth={1.75} />
-            {t(labelKey, { defaultValue: key })}
-          </button>
-        ))}
-      </div>
+      <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
 
       {error && <Alert type="error" dismissible>{error}</Alert>}
 
@@ -198,11 +172,11 @@ export default function TasksPage() {
       )}
 
       {activeTab === 'calendar' && (
-        <TaskCalendar tasks={items} onTaskClick={setSelected} />
+        <TaskCalendar tasks={allTasksCollection.items} onTaskClick={setSelected} />
       )}
 
       {activeTab === 'reminders' && (
-        <TaskReminder tasks={items} onTaskClick={setSelected} />
+        <TaskReminder tasks={allTasksCollection.items} onTaskClick={setSelected} />
       )}
 
       <Modal

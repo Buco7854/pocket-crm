@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, Pencil, Trash2, Eye, Mail, FileText } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { useEmailTemplates } from '@/hooks/useEmailTemplates'
 import { useDeleteConfirm } from '@/hooks/useDeleteConfirm'
+import { useDebounce } from '@/hooks/useDebounce'
 import { useAuthStore } from '@/store/authStore'
+import SearchFilter, { type FilterOption } from '@/components/ui/SearchFilter'
+import Pagination from '@/components/ui/Pagination'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
@@ -12,10 +15,10 @@ import Badge from '@/components/ui/Badge'
 import Alert from '@/components/ui/Alert'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import Table, { type TableColumn } from '@/components/ui/Table'
+import EmailTemplateDetail from '@/components/email/EmailTemplateDetail'
 import type { EmailTemplate, EmailTemplateType } from '@/types/models'
 
 const TEMPLATE_TYPES: EmailTemplateType[] = ['marketing', 'transactionnel', 'relance', 'bienvenue']
-
 const VARIABLES_HINT = ['{{first_name}}', '{{last_name}}', '{{email}}', '{{company}}']
 
 interface TemplateFormData {
@@ -26,33 +29,34 @@ interface TemplateFormData {
   active: boolean
 }
 
-const emptyForm = (): TemplateFormData => ({
-  name: '',
-  type: 'marketing',
-  subject: '',
-  body: '',
-  active: true,
-})
+const emptyForm = (): TemplateFormData => ({ name: '', type: 'marketing', subject: '', body: '', active: true })
 
 export default function EmailTemplateEditor() {
   const { t, i18n } = useTranslation()
   const { isAdmin, isCommercial, user } = useAuthStore()
-  const { items, loading, error, fetchTemplates, create, update, remove } = useEmailTemplates()
+  const { items, loading, error, totalItems, totalPages, currentPage, fetchTemplates, create, update, remove } = useEmailTemplates()
+  const deleteConfirm = useDeleteConfirm()
 
+  const [search, setSearch] = useState('')
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({})
+  const [page, setPage] = useState(1)
+  const debouncedSearch = useDebounce(search, 300)
+
+  const [selected, setSelected] = useState<EmailTemplate | null>(null)
   const [formOpen, setFormOpen] = useState(false)
-  const [previewOpen, setPreviewOpen] = useState(false)
   const [editing, setEditing] = useState<EmailTemplate | null>(null)
   const [form, setForm] = useState<TemplateFormData>(emptyForm())
   const [formLoading, setFormLoading] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
-  const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null)
 
-  const deleteConfirm = useDeleteConfirm()
   const canManage = isAdmin || isCommercial
-
   const fmt = (d: string) => d ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(d)) : '—'
 
-  useEffect(() => { fetchTemplates() }, [])
+  const load = useCallback(() => {
+    fetchTemplates({ page, search: debouncedSearch, typeFilter: filterValues.type || undefined })
+  }, [fetchTemplates, page, debouncedSearch, filterValues.type])
+
+  useEffect(() => { load() }, [load])
 
   function openCreate() {
     setEditing(null)
@@ -65,7 +69,13 @@ export default function EmailTemplateEditor() {
     setEditing(tpl)
     setForm({ name: tpl.name, type: tpl.type, subject: tpl.subject, body: tpl.body, active: tpl.active })
     setFormError(null)
+    setSelected(null)
     setFormOpen(true)
+  }
+
+  function openDelete(tpl: EmailTemplate) {
+    deleteConfirm.requestDelete(tpl.id, tpl.name)
+    setSelected(null)
   }
 
   async function handleSubmit() {
@@ -83,7 +93,7 @@ export default function EmailTemplateEditor() {
       }
       setFormOpen(false)
       setEditing(null)
-      fetchTemplates()
+      load()
     } catch {
       setFormError(t('email.saveFailed'))
     } finally {
@@ -93,15 +103,20 @@ export default function EmailTemplateEditor() {
 
   async function handleDelete(id: string) {
     await remove(id)
-    fetchTemplates()
+    load()
   }
+
+  const filters: FilterOption[] = [
+    {
+      key: 'type',
+      labelKey: 'fields.type',
+      options: TEMPLATE_TYPES.map((tp) => ({ value: tp, label: t(`emailTemplateType.${tp}`) })),
+    },
+  ]
 
   const columns: TableColumn<EmailTemplate>[] = [
     { key: 'name', labelKey: 'fields.name', sortable: true, render: (v) => <span className="font-medium">{v as string}</span> },
-    {
-      key: 'type', labelKey: 'fields.type',
-      render: (v) => <Badge variant="primary">{t(`emailTemplateType.${v}`)}</Badge>,
-    },
+    { key: 'type', labelKey: 'fields.type', render: (v) => <Badge variant="primary">{t(`emailTemplateType.${v}`)}</Badge> },
     { key: 'subject', labelKey: 'fields.subject' },
     {
       key: 'active', labelKey: 'fields.active',
@@ -110,29 +125,14 @@ export default function EmailTemplateEditor() {
         : <Badge variant="default">{t('common.no')}</Badge>,
     },
     { key: 'created', labelKey: 'fields.createdAt', render: (v) => fmt(v as string) },
-    {
-      key: 'id', labelKey: 'common.actions', align: 'right',
-      render: (_v, row) => (
-        <div className="flex items-center justify-end gap-1">
-          <Button variant="ghost" size="sm" icon={<Eye className="h-3.5 w-3.5" />} onClick={(ev) => { ev.stopPropagation(); setPreviewTemplate(row); setPreviewOpen(true) }} />
-          {canManage && (
-            <>
-              <Button variant="ghost" size="sm" icon={<Pencil className="h-3.5 w-3.5" />} onClick={(ev) => { ev.stopPropagation(); openEdit(row) }} />
-              <Button variant="ghost" size="sm" icon={<Trash2 className="h-3.5 w-3.5 text-danger-500" />}
-                onClick={(ev) => { ev.stopPropagation(); deleteConfirm.requestDelete(row.id, row.name) }} />
-            </>
-          )}
-        </div>
-      ),
-    },
   ]
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-surface-500">{t('email.templatesHint')}</p>
         {canManage && (
-          <Button icon={<Plus className="h-4 w-4" />} onClick={openCreate}>
+          <Button icon={<Plus className="h-4 w-4" />} onClick={openCreate} className="shrink-0 self-start sm:self-auto">
             {t('common.addEntity', { entity: t('entities.emailTemplate') })}
           </Button>
         )}
@@ -140,11 +140,41 @@ export default function EmailTemplateEditor() {
 
       {error && <Alert type="error" dismissible>{error}</Alert>}
 
+      <SearchFilter
+        searchQuery={search}
+        onSearchChange={(v) => { setSearch(v); setPage(1) }}
+        filters={filters}
+        filterValues={filterValues}
+        onFilterChange={(k, v) => { setFilterValues((f) => ({ ...f, [k]: v as string })); setPage(1) }}
+      />
+
       <Table<EmailTemplate>
         columns={columns}
         data={items}
         loading={loading}
+        onRowClick={setSelected}
       />
+
+      {totalPages > 1 && (
+        <Pagination page={currentPage} totalPages={totalPages} totalItems={totalItems} onPageChange={setPage} />
+      )}
+
+      {/* Detail Modal */}
+      <Modal
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title={selected?.name}
+        size="xl"
+      >
+        {selected && (
+          <EmailTemplateDetail
+            template={selected}
+            canManage={canManage}
+            onEdit={() => openEdit(selected)}
+            onDelete={() => openDelete(selected)}
+          />
+        )}
+      </Modal>
 
       {/* Create / Edit Modal */}
       <Modal
@@ -162,7 +192,7 @@ export default function EmailTemplateEditor() {
         <div className="space-y-4">
           {formError && <Alert type="error">{formError}</Alert>}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label={t('fields.name')}
               value={form.name}
@@ -217,36 +247,6 @@ export default function EmailTemplateEditor() {
             <label htmlFor="tpl-active" className="text-sm text-surface-700 cursor-pointer">{t('fields.active')}</label>
           </div>
         </div>
-      </Modal>
-
-      {/* Preview Modal */}
-      <Modal
-        open={previewOpen}
-        onClose={() => { setPreviewOpen(false); setPreviewTemplate(null) }}
-        title={previewTemplate ? `${t('email.preview')}: ${previewTemplate.name}` : t('email.preview')}
-        size="xl"
-      >
-        {previewTemplate && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm text-surface-600">
-              <Mail className="h-4 w-4 shrink-0" />
-              <span className="font-medium">{t('fields.subject')}:</span>
-              <span>{previewTemplate.subject}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-surface-600">
-              <FileText className="h-4 w-4 shrink-0" />
-              <span className="font-medium">{t('fields.type')}:</span>
-              <Badge variant="primary">{t(`emailTemplateType.${previewTemplate.type}`)}</Badge>
-            </div>
-            <div className="border border-surface-200 rounded-lg p-4 bg-surface-50">
-              <p className="text-xs text-surface-400 mb-2 uppercase tracking-wide">{t('email.htmlPreview')}</p>
-              <div
-                className="prose prose-sm max-w-none text-surface-800"
-                dangerouslySetInnerHTML={{ __html: previewTemplate.body }}
-              />
-            </div>
-          </div>
-        )}
       </Modal>
 
       <ConfirmDialog

@@ -6,7 +6,6 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/spf13/cobra"
 
-	// Auto-register Go migrations on startup
 	_ "pocket-crm/pb_migrations"
 
 	"pocket-crm/hooks"
@@ -16,17 +15,23 @@ import (
 func main() {
 	app := pocketbase.New()
 
-	// Dev-only command: ./pocket-crm seed
-	app.RootCmd.AddCommand(&cobra.Command{
+	// Dev-only command: ./pocket-crm seed [--force]
+	seedCmd := &cobra.Command{
 		Use:   "seed",
 		Short: "Populate the database with test data (dev only)",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			force, _ := cmd.Flags().GetBool("force")
 			if err := app.Bootstrap(); err != nil {
 				return err
 			}
-			return seeds.Run(app)
+			if err := app.RunAppMigrations(); err != nil {
+				return err
+			}
+			return seeds.Run(app, force)
 		},
-	})
+	}
+	seedCmd.Flags().Bool("force", false, "delete existing data before seeding")
+	app.RootCmd.AddCommand(seedCmd)
 
 	// Phase 5 — Invoice hooks (auto-calculate TTC total + overdue check)
 	hooks.RegisterInvoiceHooks(app)

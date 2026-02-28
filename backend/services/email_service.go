@@ -20,6 +20,7 @@ type EmailSendParams struct {
 	SentByID           string            // user who triggered the send
 	Variables          map[string]string // {{key}} → value substitution
 	CampaignID         string            // optional — groups bulk sends together
+	RunID              string            // optional — links email_log to a specific campaign_run
 	BaseURL            string            // app base URL used to inject tracking pixel
 }
 
@@ -53,6 +54,9 @@ func SendTemplatedEmail(app core.App, params EmailSendParams) error {
 	logRec.Set("sent_by", params.SentByID)
 	if params.CampaignID != "" {
 		logRec.Set("campaign_id", params.CampaignID)
+	}
+	if params.RunID != "" {
+		logRec.Set("run_id", params.RunID)
 	}
 	logRec.Set("open_count", 0)
 	logRec.Set("click_count", 0)

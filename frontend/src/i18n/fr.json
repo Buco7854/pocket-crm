@@ -267,7 +267,26 @@
     "details": "Détails",
     "preview": "Aperçu",
     "htmlPreview": "Aperçu HTML",
-    "bodyPlaceholder": "<p>Bonjour {{first_name}},</p><p>...</p>"
+    "bodyPlaceholder": "<p>Bonjour {{first_name}},</p><p>...</p>",
+    "smtpNotConfigured": "SMTP non configuré. Configurez-le dans l'admin PocketBase → Paramètres → Mail pour activer l'envoi d'emails.",
+    "campaignName": "Nom de la campagne",
+    "saveDraft": "Enregistrer en brouillon",
+    "draftSaved": "Campagne enregistrée en brouillon.",
+    "sendNow": "Envoyer maintenant",
+    "sending": "Envoi en cours…",
+    "logDetail": "Détails de l'email",
+    "noContacts": "Aucun contact sélectionné",
+    "campaignContacts": "Destinataires",
+    "sendFailed2": "Échec de l'envoi de la campagne.",
+    "campaignUpdated": "Campagne mise à jour avec succès.",
+    "relaunch": "Relancer",
+    "sendHistory": "Historique des envois",
+    "runs": "envois"
+  },
+  "campaignStatus": {
+    "brouillon": "Brouillon",
+    "en_cours": "En cours",
+    "envoye": "Envoyée"
   },
   "activityType": {
     "creation": "Création",

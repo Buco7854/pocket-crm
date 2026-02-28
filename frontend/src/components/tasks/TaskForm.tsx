@@ -28,8 +28,8 @@ export default function TaskForm({ task, users, contacts, companies, loading, on
     type: task?.type || 'appel',
     status: task?.status || 'a_faire',
     priority: task?.priority || 'moyenne',
-    due_date: task?.due_date ? task.due_date.slice(0, 16) : '',
-    reminder_at: task?.reminder_at ? task.reminder_at.slice(0, 16) : '',
+    due_date: task?.due_date ? task.due_date.replace(' ', 'T').slice(0, 16) : '',
+    reminder_at: task?.reminder_at ? task.reminder_at.replace(' ', 'T').slice(0, 16) : '',
     assignee: task?.assignee || user?.id || '',
     contact: task?.contact || '',
     company: task?.company || '',
@@ -42,10 +42,18 @@ export default function TaskForm({ task, users, contacts, companies, loading, on
     if (errors[key]) setErrors((e) => { const n = { ...e }; delete n[key]; return n })
   }
 
+  function toDbDate(val: string) {
+    return val ? val.replace('T', ' ') + ':00.000Z' : ''
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.title.trim()) { setErrors({ title: t('validation.required') }); return }
-    const data: Partial<Task> = { ...form } as Partial<Task>
+    const data: Partial<Task> = {
+      ...form,
+      due_date: toDbDate(form.due_date),
+      reminder_at: toDbDate(form.reminder_at),
+    } as Partial<Task>
     if (!task) (data as any).created_by = user?.id
     onSubmit(data)
   }

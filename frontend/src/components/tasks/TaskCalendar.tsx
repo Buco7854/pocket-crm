@@ -81,14 +81,14 @@ export default function TaskCalendar({ tasks, onTaskClick }: Props) {
       <div className="flex items-center justify-between px-5 py-4 border-b border-surface-200">
         <button
           onClick={prevMonth}
-          className="p-1.5 rounded-lg hover:bg-surface-100 text-surface-500 hover:text-surface-900 transition-colors"
+          className="cursor-pointer p-1.5 rounded-lg hover:bg-surface-100 text-surface-500 hover:text-surface-900 transition-colors"
         >
           <ChevronLeft className="h-4 w-4" strokeWidth={2} />
         </button>
         <h3 className="text-sm font-semibold text-surface-900 capitalize">{monthName}</h3>
         <button
           onClick={nextMonth}
-          className="p-1.5 rounded-lg hover:bg-surface-100 text-surface-500 hover:text-surface-900 transition-colors"
+          className="cursor-pointer p-1.5 rounded-lg hover:bg-surface-100 text-surface-500 hover:text-surface-900 transition-colors"
         >
           <ChevronRight className="h-4 w-4" strokeWidth={2} />
         </button>
@@ -127,7 +127,7 @@ export default function TaskCalendar({ tasks, onTaskClick }: Props) {
                       <button
                         key={task.id}
                         onClick={() => onTaskClick(task)}
-                        className="w-full text-left truncate rounded px-1 py-0.5 text-xs hover:opacity-80 transition-opacity"
+                        className="cursor-pointer w-full text-left truncate rounded px-1 py-0.5 text-xs hover:opacity-80 transition-opacity"
                         title={task.title}
                       >
                         <Badge variant={PRIORITY_VARIANT[task.priority] ?? 'default'} size="sm">

@@ -1,13 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FileText, Send, Clock, BarChart2 } from 'lucide-react'
 import { useEmailLogs } from '@/hooks/useEmailLogs'
 import EmailTemplateEditor from '@/components/email/EmailTemplateEditor'
 import EmailCampaignList from '@/components/email/EmailCampaignList'
 import EmailStats from '@/components/email/EmailStats'
+import Alert from '@/components/ui/Alert'
 import Badge from '@/components/ui/Badge'
 import Table, { type TableColumn } from '@/components/ui/Table'
+import Tabs, { type TabItem } from '@/components/ui/Tabs'
+import Modal from '@/components/ui/Modal'
 import Pagination from '@/components/ui/Pagination'
+import pb from '@/lib/pocketbase'
 import type { EmailLog, EmailLogStatus } from '@/types/models'
 
 type Tab = 'templates' | 'campaigns' | 'history' | 'stats'
@@ -23,10 +27,19 @@ const statusVariant: Record<EmailLogStatus, string> = {
 export default function EmailPage() {
   const { t, i18n } = useTranslation()
   const [activeTab, setActiveTab] = useState<Tab>('templates')
-  const { items: logs, loading, totalPages, currentPage, fetchLogs } = useEmailLogs()
+  const { items: logs, loading, totalItems, totalPages, currentPage, fetchLogs } = useEmailLogs()
   const [historyLoaded, setHistoryLoaded] = useState(false)
+  const [historyPage, setHistoryPage] = useState(1)
+  const [smtpConfigured, setSmtpConfigured] = useState<boolean | null>(null)
+  const [selectedLog, setSelectedLog] = useState<EmailLog | null>(null)
 
   const fmt = (d: string) => d ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(d)) : '—'
+
+  useEffect(() => {
+    pb.send('/api/crm/email/smtp-status', { method: 'GET' })
+      .then((res: any) => setSmtpConfigured(res?.configured ?? false))
+      .catch(() => setSmtpConfigured(false))
+  }, [])
 
   function handleTabChange(tab: Tab) {
     setActiveTab(tab)
@@ -36,11 +49,16 @@ export default function EmailPage() {
     }
   }
 
-  const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: 'templates', label: t('email.tabs.templates'), icon: <FileText className="h-4 w-4" /> },
-    { key: 'campaigns', label: t('email.tabs.campaigns'), icon: <Send className="h-4 w-4" /> },
-    { key: 'history', label: t('email.tabs.history'), icon: <Clock className="h-4 w-4" /> },
-    { key: 'stats', label: t('email.tabs.stats'), icon: <BarChart2 className="h-4 w-4" /> },
+  function handleHistoryPageChange(p: number) {
+    setHistoryPage(p)
+    fetchLogs({ page: p })
+  }
+
+  const tabs: TabItem<Tab>[] = [
+    { key: 'templates', label: t('email.tabs.templates'), icon: <FileText className="h-4 w-4" strokeWidth={1.75} /> },
+    { key: 'campaigns', label: t('email.tabs.campaigns'), icon: <Send className="h-4 w-4" strokeWidth={1.75} /> },
+    { key: 'history', label: t('email.tabs.history'), icon: <Clock className="h-4 w-4" strokeWidth={1.75} /> },
+    { key: 'stats', label: t('email.tabs.stats'), icon: <BarChart2 className="h-4 w-4" strokeWidth={1.75} /> },
   ]
 
   const historyColumns: TableColumn<EmailLog>[] = [
@@ -79,12 +97,6 @@ export default function EmailPage() {
       ),
     },
     { key: 'sent_at', labelKey: 'email.sentAt', render: (v) => <span className="text-xs text-surface-500">{fmt(v as string)}</span> },
-    {
-      key: 'campaign_id', labelKey: 'email.campaignId',
-      render: (v) => v
-        ? <span className="text-xs font-mono text-surface-500">{(v as string).slice(0, 10)}…</span>
-        : <span className="text-surface-300">—</span>,
-    },
   ]
 
   return (
@@ -94,25 +106,12 @@ export default function EmailPage() {
         <p className="text-sm text-surface-500">{t('email.pageDescription')}</p>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex gap-1 p-1 bg-surface-100 rounded-xl inline-flex">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => handleTabChange(tab.key)}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer whitespace-nowrap ${
-              activeTab === tab.key
-                ? 'bg-surface-0 text-surface-900 shadow-sm'
-                : 'text-surface-500 hover:text-surface-700'
-            }`}
-          >
-            {tab.icon}
-            <span>{tab.label}</span>
-          </button>
-        ))}
-      </div>
+      {smtpConfigured === false && (
+        <Alert type="warning">{t('email.smtpNotConfigured')}</Alert>
+      )}
 
-      {/* Tab content */}
+      <Tabs tabs={tabs} active={activeTab} onChange={handleTabChange} />
+
       {activeTab === 'templates' && <EmailTemplateEditor />}
       {activeTab === 'campaigns' && <EmailCampaignList />}
 
@@ -122,19 +121,56 @@ export default function EmailPage() {
             columns={historyColumns}
             data={logs}
             loading={loading}
+            onRowClick={setSelectedLog}
           />
           {totalPages > 1 && (
             <Pagination
-              page={currentPage}
+              page={historyPage}
               totalPages={totalPages}
-              totalItems={logs.length}
-              onPageChange={(p) => fetchLogs({ page: p })}
+              totalItems={totalItems}
+              onPageChange={handleHistoryPageChange}
             />
           )}
         </div>
       )}
 
       {activeTab === 'stats' && <EmailStats />}
+
+      {/* Email log detail modal */}
+      <Modal
+        open={!!selectedLog}
+        onClose={() => setSelectedLog(null)}
+        title={t('email.logDetail')}
+        size="md"
+      >
+        {selectedLog && (
+          <div className="space-y-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-8">
+              <div><span className="text-surface-500">{t('fields.email')}:</span> <span className="text-surface-900 ml-1 font-medium">{selectedLog.recipient_email}</span></div>
+              <div>
+                <span className="text-surface-500">{t('fields.status')}:</span>
+                <span className="ml-1">
+                  <Badge variant={statusVariant[selectedLog.status] as any}>{t(`emailLogStatus.${selectedLog.status}`)}</Badge>
+                </span>
+              </div>
+              <div className="sm:col-span-2"><span className="text-surface-500">{t('fields.subject')}:</span> <span className="text-surface-900 ml-1">{selectedLog.subject}</span></div>
+              <div><span className="text-surface-500">{t('email.sentAt')}:</span> <span className="text-surface-900 ml-1">{fmt(selectedLog.sent_at)}</span></div>
+              <div><span className="text-surface-500">{t('email.opens')}:</span> <span className={`ml-1 font-medium ${selectedLog.open_count > 0 ? 'text-primary-600' : 'text-surface-400'}`}>{selectedLog.open_count}</span></div>
+              <div><span className="text-surface-500">{t('email.clicks')}:</span> <span className={`ml-1 font-medium ${selectedLog.click_count > 0 ? 'text-success-600' : 'text-surface-400'}`}>{selectedLog.click_count}</span></div>
+              {selectedLog.opened_at && <div><span className="text-surface-500">Opened at:</span> <span className="text-surface-900 ml-1">{fmt(selectedLog.opened_at)}</span></div>}
+              {selectedLog.clicked_at && <div><span className="text-surface-500">Clicked at:</span> <span className="text-surface-900 ml-1">{fmt(selectedLog.clicked_at)}</span></div>}
+              {selectedLog.campaign_id && (
+                <div className="sm:col-span-2"><span className="text-surface-500">{t('email.campaignId')}:</span> <span className="text-surface-900 ml-1 font-mono text-xs">{selectedLog.campaign_id}</span></div>
+              )}
+              {selectedLog.error_message && (
+                <div className="sm:col-span-2">
+                  <span className="text-danger-600 font-medium">{selectedLog.error_message}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

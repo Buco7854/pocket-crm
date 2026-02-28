@@ -84,6 +84,8 @@ export default function InvoiceDetail({ invoice, onEdit, onDelete, onMarkPaid, o
         <div><span className="text-surface-500">{t('invoices.issuedAt')}:</span> <span className="text-surface-900 ml-1">{fmt(invoice.issued_at)}</span></div>
         <div><span className="text-surface-500">{t('invoices.dueAt')}:</span> <span className="text-surface-900 ml-1">{fmt(invoice.due_at)}</span></div>
         {invoice.paid_at && <div><span className="text-surface-500">{t('invoices.paidAt')}:</span> <span className="text-surface-900 ml-1">{fmt(invoice.paid_at)}</span></div>}
+        <div><span className="text-surface-500">{t('fields.createdAt')}:</span> <span className="text-surface-900 ml-1">{fmt(invoice.created)}</span></div>
+        <div><span className="text-surface-500">{t('fields.updatedAt')}:</span> <span className="text-surface-900 ml-1">{fmt(invoice.updated)}</span></div>
       </div>
 
       {/* Line items */}

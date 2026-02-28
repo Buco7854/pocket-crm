@@ -173,6 +173,31 @@ export interface EmailLog extends BaseModel {
   error_message: string
   sent_by: string
   campaign_id: string
+  run_id: string
+}
+
+export interface CampaignRun {
+  id: string
+  run_number: number
+  total: number
+  sent: number
+  failed: number
+  sent_at: string
+}
+
+/** Campaign statuses */
+export type CampaignStatus = 'brouillon' | 'en_cours' | 'envoye'
+
+export interface Campaign extends BaseModel {
+  name: string
+  template: string
+  contact_ids: string[]
+  status: CampaignStatus
+  total: number
+  sent: number
+  failed: number
+  campaign_key: string
+  created_by: string
 }
 
 /** Activity types */

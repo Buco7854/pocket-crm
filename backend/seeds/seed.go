@@ -2,13 +2,20 @@ package seeds
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/pocketbase/pocketbase/core"
 )
 
+// collectionsToWipe lists all seeded collections in deletion-safe order
+// (most dependent first to avoid FK conflicts).
+var collectionsToWipe = []string{
+	"activities", "tasks", "invoices", "leads", "contacts", "companies", "users",
+}
+
 // Run populates the database with test data.
-// Intended for development only — invoke via: ./pocket-crm seed
-func Run(app core.App) error {
+// Intended for development only — invoke via: ./pocket-crm seed [--force]
+func Run(app core.App, force bool) error {
 	// ==========================================
 	// USERS (3)
 	// ==========================================
@@ -17,10 +24,26 @@ func Run(app core.App) error {
 		return fmt.Errorf("find users collection: %w", err)
 	}
 
-	// Skip if data already exists
+	// Skip if data already exists (unless --force)
 	existing, _ := app.CountRecords("users")
 	if existing > 0 {
-		return fmt.Errorf("database already contains %d users — aborting to avoid duplicates", existing)
+		if !force {
+			return fmt.Errorf("database already contains %d users — aborting to avoid duplicates (use --force to overwrite)", existing)
+		}
+		log.Println("[seed] --force: wiping existing data…")
+		for _, col := range collectionsToWipe {
+			records, err := app.FindAllRecords(col)
+			if err != nil {
+				// collection may not exist yet — skip silently
+				continue
+			}
+			for _, r := range records {
+				if err := app.Delete(r); err != nil {
+					log.Printf("[seed] delete %s/%s: %v", col, r.Id, err)
+				}
+			}
+			log.Printf("[seed] wiped %d records from %s", len(records), col)
+		}
 	}
 
 	admin := core.NewRecord(usersCol)

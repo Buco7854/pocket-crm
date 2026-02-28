@@ -125,7 +125,7 @@ func sendLeadAssignmentEmail(app core.App, lead *core.Record, newOwnerID string)
 `, ownerName, leadTitle),
 	}
 
-	if err := app.Mail().Send(msg); err != nil {
+	if err := app.NewMailClient().Send(msg); err != nil {
 		log.Printf("[leads] failed to send assignment email to %s: %v", ownerEmail, err)
 	}
 }

@@ -113,7 +113,7 @@ function ReminderSection({ icon, title, count, tasks, badgeVariant, onTaskClick 
           <li key={task.id}>
             <button
               onClick={() => onTaskClick(task)}
-              className="w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-surface-50 transition-colors"
+              className="cursor-pointer w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-surface-50 transition-colors"
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-surface-900 truncate">{task.title}</p>

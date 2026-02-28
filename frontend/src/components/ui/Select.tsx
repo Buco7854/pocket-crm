@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useId } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown, Check, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -46,12 +47,18 @@ export default function Select({ label, options, placeholder, error, required, d
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
+  const [rect, setRect] = useState<DOMRect | null>(null)
   const ref = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
+  // Close on outside click (both trigger and portal dropdown)
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (
+        ref.current && !ref.current.contains(e.target as Node) &&
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node)
+      ) {
         setOpen(false)
         setQuery('')
       }
@@ -67,6 +74,20 @@ export default function Select({ label, options, placeholder, error, required, d
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [])
+
+  // Update dropdown position on scroll/resize while open
+  useEffect(() => {
+    if (!open) return
+    function update() {
+      if (ref.current) setRect(ref.current.getBoundingClientRect())
+    }
+    window.addEventListener('scroll', update, true)
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('scroll', update, true)
+      window.removeEventListener('resize', update)
+    }
+  }, [open])
 
   useEffect(() => {
     if (open && searchable) {
@@ -96,6 +117,7 @@ export default function Select({ label, options, placeholder, error, required, d
 
   function toggle() {
     if (disabled) return
+    if (!open && ref.current) setRect(ref.current.getBoundingClientRect())
     setOpen((v) => !v)
     setQuery('')
   }
@@ -117,6 +139,69 @@ export default function Select({ label, options, placeholder, error, required, d
   function isSelected(optValue: string) {
     return multiple ? currentValues.includes(optValue) : value === optValue
   }
+
+  const dropdown = open && rect && createPortal(
+    <div
+      ref={dropdownRef}
+      style={{ position: 'fixed', top: rect.bottom + 4, left: rect.left, width: rect.width, zIndex: 9999 }}
+      className="rounded-lg border border-surface-200 bg-surface-50 shadow-card-hover overflow-hidden"
+    >
+      {searchable && (
+        <div className="px-2 py-2 border-b border-surface-100">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-surface-400 pointer-events-none" strokeWidth={2} />
+            <input
+              ref={searchRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full h-7 rounded-md border border-surface-200 bg-surface-0 pl-7 pr-3 text-xs text-surface-700 placeholder:text-surface-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/20"
+              placeholder={t('common.search')}
+            />
+          </div>
+        </div>
+      )}
+      <div className="max-h-48 overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+        {!required && placeholder && (
+          <button
+            type="button"
+            onClick={() => {
+              if (multiple) {
+                onChangeMultiple?.([])
+              } else {
+                selectSingle('')
+              }
+            }}
+            className={`cursor-pointer flex w-full items-center px-3 py-2 text-sm transition-colors ${
+              !hasSelection ? 'text-primary-500 bg-primary-500/10 font-medium' : 'text-surface-400 hover:bg-surface-100'
+            }`}
+          >
+            {placeholder}
+          </button>
+        )}
+        {filtered.length === 0 ? (
+          <div className="px-3 py-2 text-sm text-surface-400 text-center">{t('common.noResults')}</div>
+        ) : (
+          filtered.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => multiple ? toggleMulti(opt.value) : selectSingle(opt.value)}
+              className={`cursor-pointer flex w-full items-center justify-between px-3 py-2 text-sm transition-colors ${
+                isSelected(opt.value)
+                  ? 'text-primary-500 bg-primary-500/10 font-medium'
+                  : 'text-surface-700 hover:bg-surface-100 hover:text-surface-900'
+              }`}
+            >
+              <span>{opt.label}</span>
+              {isSelected(opt.value) && <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />}
+            </button>
+          ))
+        )}
+      </div>
+    </div>,
+    document.body
+  )
 
   return (
     <div className={`space-y-1.5 ${className}`}>
@@ -147,65 +232,7 @@ export default function Select({ label, options, placeholder, error, required, d
           className={`absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-400 pointer-events-none transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           strokeWidth={2}
         />
-
-        {open && (
-          <div className="absolute left-0 top-full mt-1 w-full rounded-lg border border-surface-200 bg-surface-50 shadow-card-hover overflow-hidden z-50">
-            {searchable && (
-              <div className="px-2 py-2 border-b border-surface-100">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-surface-400 pointer-events-none" strokeWidth={2} />
-                  <input
-                    ref={searchRef}
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    className="w-full h-7 rounded-md border border-surface-200 bg-surface-0 pl-7 pr-3 text-xs text-surface-700 placeholder:text-surface-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/20"
-                    placeholder={t('common.search')}
-                  />
-                </div>
-              </div>
-            )}
-            <div className="max-h-48 overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-              {/* Clear / deselect-all row */}
-              {!required && placeholder && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (multiple) {
-                      onChangeMultiple?.([])
-                    } else {
-                      selectSingle('')
-                    }
-                  }}
-                  className={`cursor-pointer flex w-full items-center px-3 py-2 text-sm transition-colors ${
-                    !hasSelection ? 'text-primary-500 bg-primary-500/10 font-medium' : 'text-surface-400 hover:bg-surface-100'
-                  }`}
-                >
-                  {placeholder}
-                </button>
-              )}
-              {filtered.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-surface-400 text-center">{t('common.noResults')}</div>
-              ) : (
-                filtered.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => multiple ? toggleMulti(opt.value) : selectSingle(opt.value)}
-                    className={`cursor-pointer flex w-full items-center justify-between px-3 py-2 text-sm transition-colors ${
-                      isSelected(opt.value)
-                        ? 'text-primary-500 bg-primary-500/10 font-medium'
-                        : 'text-surface-700 hover:bg-surface-100 hover:text-surface-900'
-                    }`}
-                  >
-                    <span>{opt.label}</span>
-                    {isSelected(opt.value) && <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />}
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        )}
+        {dropdown}
       </div>
       {error && <p className="text-xs text-danger-600">{error}</p>}
     </div>

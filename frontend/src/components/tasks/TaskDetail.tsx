@@ -69,6 +69,8 @@ export default function TaskDetail({ task, onEdit, onDelete, onToggleComplete, c
         </div>
         <div><span className="text-surface-500">{t('fields.company')}:</span> <span className="text-surface-900 ml-1">{(task as any).expand?.company?.name || '—'}</span></div>
         {task.completed_at && <div><span className="text-surface-500">{t('fields.completedAt')}:</span> <span className="text-surface-900 ml-1">{fmt(task.completed_at)}</span></div>}
+        <div><span className="text-surface-500">{t('fields.createdAt')}:</span> <span className="text-surface-900 ml-1">{fmt(task.created)}</span></div>
+        <div><span className="text-surface-500">{t('fields.updatedAt')}:</span> <span className="text-surface-900 ml-1">{fmt(task.updated)}</span></div>
       </div>
 
       {task.description && (

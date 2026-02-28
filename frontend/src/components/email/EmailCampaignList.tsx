@@ -1,236 +1,337 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Send, Users, ChevronRight } from 'lucide-react'
+import { Send, Plus } from 'lucide-react'
 import { useEmailTemplates } from '@/hooks/useEmailTemplates'
-import { useEmailLogs } from '@/hooks/useEmailLogs'
 import { useCollection } from '@/hooks/useCollection'
+import { useDeleteConfirm } from '@/hooks/useDeleteConfirm'
+import { useDebounce } from '@/hooks/useDebounce'
 import pb from '@/lib/pocketbase'
+import SearchFilter, { type FilterOption } from '@/components/ui/SearchFilter'
+import Pagination from '@/components/ui/Pagination'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Select from '@/components/ui/Select'
 import Alert from '@/components/ui/Alert'
 import Badge from '@/components/ui/Badge'
-import type { EmailTemplate, Contact } from '@/types/models'
+import Input from '@/components/ui/Input'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import Table, { type TableColumn } from '@/components/ui/Table'
+import CampaignDetail from '@/components/email/CampaignDetail'
+import type { EmailTemplate, Contact, Campaign, CampaignStatus } from '@/types/models'
+import type { BadgeVariant } from '@/components/ui/Badge'
+import { useAuthStore } from '@/store/authStore'
 
-interface CampaignSummary {
-  campaign_id: string
-  template_name: string
-  total: number
-  sent: number
-  failed: number
-  last_sent: string
+const statusVariant: Record<CampaignStatus, BadgeVariant> = {
+  brouillon: 'default',
+  en_cours: 'info',
+  envoye: 'success',
 }
 
 export default function EmailCampaignList() {
   const { t, i18n } = useTranslation()
+  const { user } = useAuthStore()
   const { items: templates, fetchTemplates } = useEmailTemplates()
-  const { items: logs, loading: logsLoading, fetchLogs } = useEmailLogs()
+  const campaignsCollection = useCollection<Campaign>('campaigns')
   const contactsCollection = useCollection<Contact>('contacts')
+  const deleteConfirm = useDeleteConfirm()
 
-  const [campaigns, setCampaigns] = useState<CampaignSummary[]>([])
-  const [sendOpen, setSendOpen] = useState(false)
-  const [sendLoading, setSendLoading] = useState(false)
-  const [sendError, setSendError] = useState<string | null>(null)
-  const [sendSuccess, setSendSuccess] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({})
+  const [page, setPage] = useState(1)
+  const debouncedSearch = useDebounce(search, 300)
+
+  const [selected, setSelected] = useState<Campaign | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [sending, setSending] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   // Form state
+  const [name, setName] = useState('')
   const [selectedTemplate, setSelectedTemplate] = useState('')
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
-  const [contacts, setContacts] = useState<Contact[]>([])
+  const [contactOptions, setContactOptions] = useState<{ value: string; label: string }[]>([])
   const [loadingContacts, setLoadingContacts] = useState(false)
 
   const fmt = (d: string) => d ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(d)) : '—'
 
-  useEffect(() => { fetchTemplates() }, [])
-
-  useEffect(() => {
-    fetchLogs().then(() => {})
-  }, [])
-
-  // Build campaign summaries from logs
-  useEffect(() => {
-    const map = new Map<string, CampaignSummary>()
-    for (const log of logs) {
-      if (!log.campaign_id) continue
-      const tplName = (log as any).expand?.template?.name || '—'
-      if (!map.has(log.campaign_id)) {
-        map.set(log.campaign_id, {
-          campaign_id: log.campaign_id,
-          template_name: tplName,
-          total: 0, sent: 0, failed: 0,
-          last_sent: log.sent_at || log.created,
-        })
-      }
-      const s = map.get(log.campaign_id)!
-      s.total++
-      if (log.status === 'envoye' || log.status === 'ouvert' || log.status === 'clique') s.sent++
-      if (log.status === 'echoue') s.failed++
-      if ((log.sent_at || log.created) > s.last_sent) s.last_sent = log.sent_at || log.created
+  const loadCampaigns = useCallback(() => {
+    const filters: string[] = []
+    if (debouncedSearch) {
+      const s = debouncedSearch.replace(/"/g, '\\"')
+      filters.push(`name ~ "${s}"`)
     }
-    setCampaigns(Array.from(map.values()).sort((a, b) => b.last_sent.localeCompare(a.last_sent)))
-  }, [logs])
+    if (filterValues.status) {
+      filters.push(`status = "${filterValues.status}"`)
+    }
+    campaignsCollection.fetchList({
+      page,
+      sort: '-created',
+      expand: 'template',
+      filter: filters.length ? filters.join(' && ') : undefined,
+    })
+  }, [campaignsCollection.fetchList, page, debouncedSearch, filterValues.status])
+
+  useEffect(() => { fetchTemplates() }, [])
+  useEffect(() => { loadCampaigns() }, [loadCampaigns])
 
   const loadContacts = useCallback(async () => {
     setLoadingContacts(true)
     try {
-      const res = await contactsCollection.fetchList({ perPage: 200, sort: 'last_name', fields: 'id,first_name,last_name,email' })
-      if (res) setContacts(res.items.filter((c) => c.email))
+      const res = await contactsCollection.fetchList({ perPage: 500, sort: 'last_name', fields: 'id,first_name,last_name,email' })
+      if (res) {
+        setContactOptions(
+          res.items
+            .filter((c) => c.email)
+            .map((c) => ({ value: c.id, label: `${c.first_name} ${c.last_name} — ${c.email}` }))
+        )
+      }
     } finally {
       setLoadingContacts(false)
     }
   }, [contactsCollection.fetchList])
 
-  function openSend() {
+  function openCreate() {
+    setEditingCampaign(null)
+    setName('')
     setSelectedTemplate('')
     setSelectedContacts([])
-    setSendError(null)
-    setSendSuccess(null)
+    setError(null)
     loadContacts()
-    setSendOpen(true)
+    setModalOpen(true)
   }
 
-  async function handleSendCampaign() {
-    if (!selectedTemplate) { setSendError(t('email.selectTemplate')); return }
-    if (selectedContacts.length === 0) { setSendError(t('email.selectContacts')); return }
-    setSendLoading(true)
-    setSendError(null)
-    setSendSuccess(null)
+  function openEdit(campaign: Campaign) {
+    setEditingCampaign(campaign)
+    setName(campaign.name)
+    setSelectedTemplate(campaign.template || '')
+    setSelectedContacts(campaign.contact_ids || [])
+    setError(null)
+    loadContacts()
+    setSelected(null)
+    setModalOpen(true)
+  }
+
+  function openDelete(campaign: Campaign) {
+    deleteConfirm.requestDelete(campaign.id, campaign.name)
+    setSelected(null)
+  }
+
+  async function handleSave() {
+    if (!name.trim()) { setError(t('validation.required')); return }
+    if (!selectedTemplate) { setError(t('email.selectTemplate')); return }
+    setSaving(true)
+    setError(null)
     try {
-      const res: any = await pb.send('/api/crm/send-campaign', {
-        method: 'POST',
-        body: JSON.stringify({ template_id: selectedTemplate, contact_ids: selectedContacts }),
-        headers: { 'Content-Type': 'application/json' },
-      })
-      setSendSuccess(t('email.campaignSent', { sent: res.sent, failed: res.failed, id: res.campaign_id }))
-      fetchLogs()
+      if (editingCampaign) {
+        await pb.collection('campaigns').update(editingCampaign.id, {
+          name,
+          template: selectedTemplate,
+          contact_ids: selectedContacts,
+          total: selectedContacts.length,
+        })
+      } else {
+        await pb.collection('campaigns').create({
+          name,
+          template: selectedTemplate,
+          contact_ids: selectedContacts,
+          status: 'brouillon',
+          total: selectedContacts.length,
+          sent: 0,
+          failed: 0,
+          created_by: user?.id,
+        })
+      }
+      setModalOpen(false)
+      setEditingCampaign(null)
+      loadCampaigns()
     } catch (err: any) {
-      setSendError(err?.message || t('email.sendFailed'))
+      setError(err?.message || t('common.error'))
     } finally {
-      setSendLoading(false)
+      setSaving(false)
     }
   }
 
-  function toggleContact(id: string) {
-    setSelectedContacts((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-    )
+  async function handleDelete(id: string) {
+    await pb.collection('campaigns').delete(id)
+    loadCampaigns()
   }
 
-  const templateOptions = templates.map((t: EmailTemplate) => ({ value: t.id, label: t.name }))
+  async function handleSendCampaign(campaign: Campaign) {
+    setSending(campaign.id)
+    setSelected(null)
+    setError(null)
+    try {
+      await pb.send(`/api/crm/campaigns/${campaign.id}/send`, { method: 'POST' })
+      loadCampaigns()
+    } catch (err: any) {
+      setError(err?.message || t('email.sendFailed2'))
+    } finally {
+      setSending(null)
+    }
+  }
+
+  const templateOptions = templates.map((tpl: EmailTemplate) => ({ value: tpl.id, label: tpl.name }))
+
+  const statuses: CampaignStatus[] = ['brouillon', 'en_cours', 'envoye']
+
+  const filters: FilterOption[] = [
+    {
+      key: 'status',
+      labelKey: 'fields.status',
+      options: statuses.map((s) => ({ value: s, label: t(`campaignStatus.${s}`) })),
+    },
+  ]
+
+  const columns: TableColumn<Campaign>[] = [
+    {
+      key: 'name', labelKey: 'fields.name', sortable: true,
+      render: (v) => <span className="font-medium">{v as string}</span>,
+    },
+    {
+      key: 'template', labelKey: 'entities.emailTemplate',
+      render: (_v, row) => <span className="text-surface-600">{(row as any).expand?.template?.name || '—'}</span>,
+    },
+    {
+      key: 'status', labelKey: 'fields.status',
+      render: (v) => <Badge variant={statusVariant[v as CampaignStatus]}>{t(`campaignStatus.${v}`)}</Badge>,
+    },
+    {
+      key: 'total', labelKey: 'email.recipients', align: 'right',
+      render: (_v, row) => (
+        <span className="text-sm text-surface-600">
+          {row.status === 'envoye' ? `${row.sent}/${row.total}` : row.total}
+          {row.failed > 0 && <> <Badge variant="danger">{row.failed}</Badge></>}
+        </span>
+      ),
+    },
+    {
+      key: 'created', labelKey: 'fields.createdAt',
+      render: (v) => <span className="text-xs text-surface-500">{fmt(v as string)}</span>,
+    },
+  ]
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-surface-500">{t('email.campaignsHint')}</p>
-        <Button icon={<Send className="h-4 w-4" />} onClick={openSend}>
+        <Button icon={<Plus className="h-4 w-4" />} onClick={openCreate} className="shrink-0 self-start sm:self-auto">
           {t('email.newCampaign')}
         </Button>
       </div>
 
-      {campaigns.length === 0 && !logsLoading && (
+      {error && <Alert type="error" dismissible>{error}</Alert>}
+
+      <SearchFilter
+        searchQuery={search}
+        onSearchChange={(v) => { setSearch(v); setPage(1) }}
+        filters={filters}
+        filterValues={filterValues}
+        onFilterChange={(k, v) => { setFilterValues((f) => ({ ...f, [k]: v as string })); setPage(1) }}
+      />
+
+      <Table<Campaign>
+        columns={columns}
+        data={campaignsCollection.items}
+        loading={campaignsCollection.loading}
+        onRowClick={setSelected}
+      />
+
+      {campaignsCollection.totalPages > 1 && (
+        <Pagination
+          page={campaignsCollection.currentPage}
+          totalPages={campaignsCollection.totalPages}
+          totalItems={campaignsCollection.totalItems}
+          onPageChange={setPage}
+        />
+      )}
+
+      {campaignsCollection.items.length === 0 && !campaignsCollection.loading && (
         <div className="text-center py-12 text-surface-400">
           <Send className="h-8 w-8 mx-auto mb-2 opacity-30" />
           <p className="text-sm">{t('empty.campaigns')}</p>
         </div>
       )}
 
-      {logsLoading && (
-        <div className="flex justify-center py-8">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-600 border-t-transparent" />
-        </div>
-      )}
-
-      <div className="space-y-2">
-        {campaigns.map((campaign) => (
-          <div key={campaign.campaign_id} className="flex items-center gap-4 p-4 rounded-xl border border-surface-200 bg-surface-0 hover:bg-surface-50 transition-colors">
-            <div className="flex-1 min-w-0">
-              <div className="font-medium text-surface-900 text-sm truncate">{campaign.template_name}</div>
-              <div className="text-xs text-surface-400 mt-0.5 font-mono">{t('email.campaignId')}: {campaign.campaign_id.slice(0, 12)}…</div>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <span className="text-surface-500">{campaign.total} {t('email.recipients')}</span>
-              <Badge variant="success">{campaign.sent} {t('email.sent')}</Badge>
-              {campaign.failed > 0 && <Badge variant="danger">{campaign.failed} {t('email.failed')}</Badge>}
-              <span className="text-surface-400 text-xs hidden sm:block">{fmt(campaign.last_sent)}</span>
-            </div>
-            <ChevronRight className="h-4 w-4 text-surface-400 shrink-0" />
-          </div>
-        ))}
-      </div>
-
-      {/* Send Campaign Modal */}
+      {/* Detail Modal */}
       <Modal
-        open={sendOpen}
-        onClose={() => setSendOpen(false)}
-        title={t('email.newCampaign')}
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title={selected?.name}
+        size="md"
+      >
+        {selected && (
+          <CampaignDetail
+            campaign={selected}
+            sending={sending === selected.id}
+            onEdit={() => openEdit(selected)}
+            onDelete={() => openDelete(selected)}
+            onSend={() => handleSendCampaign(selected)}
+          />
+        )}
+      </Modal>
+
+      {/* New / Edit Modal */}
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editingCampaign ? t('common.editEntity', { entity: editingCampaign.name }) : t('email.newCampaign')}
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setSendOpen(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleSendCampaign} loading={sendLoading} icon={<Send className="h-4 w-4" />}>
-              {t('email.sendCampaign')} ({selectedContacts.length})
+            <Button variant="secondary" onClick={() => setModalOpen(false)}>{t('common.cancel')}</Button>
+            <Button onClick={handleSave} loading={saving} disabled={!selectedTemplate}>
+              {editingCampaign ? t('common.save') : t('email.saveDraft')}
             </Button>
           </>
         }
       >
         <div className="space-y-4">
-          {sendError && <Alert type="error">{sendError}</Alert>}
-          {sendSuccess && <Alert type="success">{sendSuccess}</Alert>}
+          {error && <Alert type="error">{error}</Alert>}
+
+          <Input
+            label={t('email.campaignName')}
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
 
           <Select
             label={t('entities.emailTemplate')}
+            required
             value={selectedTemplate}
             onChange={setSelectedTemplate}
-            options={[{ value: '', label: `— ${t('email.selectTemplate')} —` }, ...templateOptions]}
+            options={templateOptions}
+            placeholder={t('email.selectTemplate')}
+            searchable
           />
 
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-surface-700">
-                {t('entities.contacts')}
-                {selectedContacts.length > 0 && (
-                  <span className="ml-2 text-xs text-primary-600 font-normal">{t('common.nSelected', { count: selectedContacts.length })}</span>
-                )}
-              </label>
-              <div className="flex gap-2">
-                <button className="text-xs text-primary-600 hover:underline" onClick={() => setSelectedContacts(contacts.map((c) => c.id))}>{t('common.all')}</button>
-                <span className="text-surface-300">|</span>
-                <button className="text-xs text-surface-500 hover:underline" onClick={() => setSelectedContacts([])}>{t('common.none')}</button>
-              </div>
+          {loadingContacts ? (
+            <div className="flex justify-center py-4">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-600 border-t-transparent" />
             </div>
-
-            {loadingContacts ? (
-              <div className="flex justify-center py-4">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-600 border-t-transparent" />
-              </div>
-            ) : (
-              <div className="border border-surface-200 rounded-lg max-h-56 overflow-y-auto divide-y divide-surface-100">
-                {contacts.length === 0 && (
-                  <p className="py-4 text-center text-sm text-surface-400">{t('empty.contacts')}</p>
-                )}
-                {contacts.map((contact) => {
-                  const checked = selectedContacts.includes(contact.id)
-                  return (
-                    <label key={contact.id} className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-surface-50 transition-colors ${checked ? 'bg-primary-50/50' : ''}`}>
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleContact(contact.id)}
-                        className="h-4 w-4 rounded accent-primary-600 shrink-0"
-                      />
-                      <Users className="h-4 w-4 text-surface-400 shrink-0" />
-                      <span className="text-sm font-medium text-surface-800 min-w-0 truncate">
-                        {contact.first_name} {contact.last_name}
-                      </span>
-                      <span className="text-xs text-surface-400 ml-auto shrink-0 hidden sm:block">{contact.email}</span>
-                    </label>
-                  )
-                })}
-              </div>
-            )}
-          </div>
+          ) : (
+            <Select
+              label={`${t('email.campaignContacts')}${selectedContacts.length > 0 ? ` (${selectedContacts.length})` : ''}`}
+              multiple
+              values={selectedContacts}
+              onChangeMultiple={setSelectedContacts}
+              options={contactOptions}
+              placeholder={t('email.noContacts')}
+              searchable
+            />
+          )}
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={deleteConfirm.isOpen}
+        name={deleteConfirm.itemLabel}
+        loading={deleteConfirm.loading}
+        onConfirm={() => deleteConfirm.confirmDelete(handleDelete)}
+        onCancel={deleteConfirm.cancelDelete}
+      />
     </div>
   )
 }

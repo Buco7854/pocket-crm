@@ -76,6 +76,7 @@ export default function LeadDetail({ lead, onEdit, onDelete, onStatusChange, can
         <div><span className="text-surface-500">{t('fields.expectedClose')}:</span> <span className="text-surface-900 ml-1">{fmt(lead.expected_close)}</span></div>
         {lead.closed_at && <div><span className="text-surface-500">{t('fields.closedAt')}:</span> <span className="text-surface-900 ml-1">{fmt(lead.closed_at)}</span></div>}
         <div><span className="text-surface-500">{t('fields.createdAt')}:</span> <span className="text-surface-900 ml-1">{fmt(lead.created)}</span></div>
+        <div><span className="text-surface-500">{t('fields.updatedAt')}:</span> <span className="text-surface-900 ml-1">{fmt(lead.updated)}</span></div>
       </div>
 
       {lead.notes && (

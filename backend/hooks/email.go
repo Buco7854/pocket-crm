@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"image"
 	"image/color"
@@ -56,7 +57,12 @@ func RegisterEmailRoutes(app core.App) {
 		// ── Protected endpoints (require authenticated user) ──────────────────
 		se.Router.POST("/api/crm/send-email", buildSendEmail(app)).Bind(apis.RequireAuth())
 		se.Router.POST("/api/crm/send-campaign", buildSendCampaign(app)).Bind(apis.RequireAuth())
+		se.Router.POST("/api/crm/campaigns/{id}/send", buildSendCampaignById(app)).Bind(apis.RequireAuth())
+		se.Router.GET("/api/crm/campaigns/{id}/runs", buildCampaignRuns(app)).Bind(apis.RequireAuth())
+		se.Router.GET("/api/crm/email/global-stats", buildGlobalStats(app)).Bind(apis.RequireAuth())
+		se.Router.GET("/api/crm/email/campaign-stats-list", buildCampaignStatsList(app)).Bind(apis.RequireAuth())
 		se.Router.GET("/api/crm/email/campaign-stats/{campaignId}", buildCampaignStats(app)).Bind(apis.RequireAuth())
+		se.Router.GET("/api/crm/email/smtp-status", buildSMTPStatus(app)).Bind(apis.RequireAuth())
 
 		return se.Next()
 	})
@@ -271,7 +277,296 @@ func buildTrackClick(app core.App) func(*core.RequestEvent) error {
 	}
 }
 
-// ─── Campaign statistics ──────────────────────────────────────────────────────
+// ─── SMTP status ─────────────────────────────────────────────────────────────
+
+func buildSMTPStatus(app core.App) func(*core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		smtp := app.Settings().SMTP
+		configured := smtp.Enabled && smtp.Host != ""
+		return e.JSON(http.StatusOK, map[string]bool{"configured": configured})
+	}
+}
+
+// ─── Send campaign by campaign record ID ─────────────────────────────────────
+
+func buildSendCampaignById(app core.App) func(*core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		campaignId := e.Request.PathValue("id")
+
+		campaign, err := app.FindRecordById("campaigns", campaignId)
+		if err != nil {
+			return e.NotFoundError("Campaign not found", err)
+		}
+		if campaign.GetString("status") == "en_cours" {
+			return e.BadRequestError("Campaign is currently being sent", nil)
+		}
+
+		templateId := campaign.GetString("template")
+
+		// Parse contact_ids from JSON field
+		var contactIDs []string
+		raw, _ := json.Marshal(campaign.Get("contact_ids"))
+		json.Unmarshal(raw, &contactIDs) //nolint:errcheck
+
+		if len(contactIDs) == 0 {
+			return e.BadRequestError("Campaign has no contacts", nil)
+		}
+
+		baseURL := app.Settings().Meta.AppURL
+		sentByID := e.Auth.Id
+		now := time.Now().UTC().Format("2006-01-02 15:04:05.000Z")
+
+		// Count existing runs to assign the next run_number
+		var runCount int
+		app.DB().NewQuery("SELECT COUNT(*) FROM campaign_runs WHERE campaign = {:id}"). //nolint:errcheck
+			Bind(dbx.Params{"id": campaignId}).Row(&runCount)
+
+		// Create the campaign_run record before sending
+		runsCol, err := app.FindCollectionByNameOrId("campaign_runs")
+		if err != nil {
+			return e.InternalServerError("campaign_runs collection not found", err)
+		}
+		runRec := core.NewRecord(runsCol)
+		runRec.Set("campaign", campaignId)
+		runRec.Set("run_number", runCount+1)
+		runRec.Set("total", len(contactIDs))
+		runRec.Set("sent_by", sentByID)
+		runRec.Set("sent_at", now)
+		if err := app.Save(runRec); err != nil {
+			return e.InternalServerError("Failed to create campaign run", err)
+		}
+		runID := runRec.Id
+
+		campaign.Set("status", "en_cours")
+		campaign.Set("total", len(contactIDs))
+		if err := app.Save(campaign); err != nil {
+			return e.InternalServerError("Failed to update campaign", err)
+		}
+
+		var sent, failed int
+
+		for _, contactID := range contactIDs {
+			contact, err := app.FindRecordById("contacts", contactID)
+			if err != nil {
+				failed++
+				continue
+			}
+			recipientEmail := contact.GetString("email")
+			if recipientEmail == "" {
+				failed++
+				continue
+			}
+			params := services.EmailSendParams{
+				TemplateID:         templateId,
+				RecipientEmail:     recipientEmail,
+				RecipientName:      contact.GetString("first_name") + " " + contact.GetString("last_name"),
+				RecipientContactID: contactID,
+				SentByID:           sentByID,
+				CampaignID:         campaignId,
+				RunID:              runID,
+				BaseURL:            baseURL,
+				Variables: map[string]string{
+					"first_name": contact.GetString("first_name"),
+					"last_name":  contact.GetString("last_name"),
+					"email":      recipientEmail,
+				},
+			}
+			if err := services.SendTemplatedEmail(app, params); err != nil {
+				failed++
+			} else {
+				sent++
+			}
+		}
+
+		// Update run record with final counts
+		runRec.Set("sent", sent)
+		runRec.Set("failed", failed)
+		app.Save(runRec) //nolint:errcheck
+
+		campaign.Set("status", "envoye")
+		campaign.Set("sent", campaign.GetInt("sent")+sent)
+		campaign.Set("failed", campaign.GetInt("failed")+failed)
+		app.Save(campaign) //nolint:errcheck
+
+		return e.JSON(http.StatusOK, map[string]interface{}{
+			"campaign_id": campaignId,
+			"run_id":      runID,
+			"run_number":  runCount + 1,
+			"sent":        sent,
+			"failed":      failed,
+		})
+	}
+}
+
+// ─── List runs for a campaign ─────────────────────────────────────────────────
+
+type campaignRunRow struct {
+	ID        string `db:"id"`
+	RunNumber int    `db:"run_number"`
+	Total     int    `db:"total"`
+	Sent      int    `db:"sent"`
+	Failed    int    `db:"failed"`
+	SentAt    string `db:"sent_at"`
+}
+
+func buildCampaignRuns(app core.App) func(*core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		campaignID := e.Request.PathValue("id")
+
+		var rows []campaignRunRow
+		err := app.DB().NewQuery(`
+			SELECT id, run_number, total, sent, failed, sent_at
+			FROM campaign_runs
+			WHERE campaign = {:campaignId}
+			ORDER BY run_number ASC
+		`).Bind(dbx.Params{"campaignId": campaignID}).All(&rows)
+		if err != nil {
+			return e.InternalServerError("Failed to query campaign runs", err)
+		}
+
+		type runResponse struct {
+			ID        string `json:"id"`
+			RunNumber int    `json:"run_number"`
+			Total     int    `json:"total"`
+			Sent      int    `json:"sent"`
+			Failed    int    `json:"failed"`
+			SentAt    string `json:"sent_at"`
+		}
+
+		result := make([]runResponse, 0, len(rows))
+		for _, r := range rows {
+			result = append(result, runResponse{
+				ID:        r.ID,
+				RunNumber: r.RunNumber,
+				Total:     r.Total,
+				Sent:      r.Sent,
+				Failed:    r.Failed,
+				SentAt:    r.SentAt,
+			})
+		}
+
+		return e.JSON(http.StatusOK, result)
+	}
+}
+
+// ─── Global statistics (aggregate over ALL email_logs, not paginated) ────────
+
+func buildGlobalStats(app core.App) func(*core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		var row struct {
+			Total   int `db:"total"`
+			Sent    int `db:"sent"`
+			Failed  int `db:"failed"`
+			Opened  int `db:"opened"`
+			Clicked int `db:"clicked"`
+		}
+		err := app.DB().NewQuery(`
+			SELECT
+				COUNT(*) AS total,
+				COALESCE(SUM(CASE WHEN status IN ('envoye','ouvert','clique') THEN 1 ELSE 0 END), 0) AS sent,
+				COALESCE(SUM(CASE WHEN status = 'echoue' THEN 1 ELSE 0 END), 0) AS failed,
+				COALESCE(SUM(CASE WHEN open_count > 0 THEN 1 ELSE 0 END), 0) AS opened,
+				COALESCE(SUM(CASE WHEN click_count > 0 THEN 1 ELSE 0 END), 0) AS clicked
+			FROM email_logs
+		`).One(&row)
+		if err != nil {
+			return e.InternalServerError("Failed to query global stats", err)
+		}
+
+		openRate := 0.0
+		clickRate := 0.0
+		if row.Sent > 0 {
+			openRate = float64(row.Opened) / float64(row.Sent) * 100
+			clickRate = float64(row.Clicked) / float64(row.Sent) * 100
+		}
+
+		return e.JSON(http.StatusOK, map[string]interface{}{
+			"total":      row.Total,
+			"sent":       row.Sent,
+			"failed":     row.Failed,
+			"opened":     row.Opened,
+			"clicked":    row.Clicked,
+			"open_rate":  fmt.Sprintf("%.1f", openRate),
+			"click_rate": fmt.Sprintf("%.1f", clickRate),
+		})
+	}
+}
+
+// ─── Campaign stats list (JOIN campaigns + email_logs, server-aggregated) ─────
+
+type campaignStatsListRow struct {
+	CampaignID   string `db:"campaign_id"`
+	CampaignName string `db:"campaign_name"`
+	Status       string `db:"campaign_status"`
+	Total        int    `db:"total"`
+	Sent         int    `db:"sent"`
+	Failed       int    `db:"failed"`
+	Opened       int    `db:"opened"`
+	Clicked      int    `db:"clicked"`
+}
+
+func buildCampaignStatsList(app core.App) func(*core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		var rows []campaignStatsListRow
+		err := app.DB().NewQuery(`
+			SELECT
+				c.id          AS campaign_id,
+				c.name        AS campaign_name,
+				c.status      AS campaign_status,
+				COUNT(el.id)  AS total,
+				SUM(CASE WHEN el.status IN ('envoye','ouvert','clique') THEN 1 ELSE 0 END) AS sent,
+				SUM(CASE WHEN el.status = 'echoue' THEN 1 ELSE 0 END) AS failed,
+				SUM(CASE WHEN el.open_count > 0 THEN 1 ELSE 0 END) AS opened,
+				SUM(CASE WHEN el.click_count > 0 THEN 1 ELSE 0 END) AS clicked
+			FROM campaigns c
+			INNER JOIN email_logs el ON el.campaign_id = c.id
+			GROUP BY c.id, c.name, c.status
+			ORDER BY MAX(el.created) DESC
+		`).All(&rows)
+		if err != nil {
+			return e.InternalServerError("Failed to query campaign stats list", err)
+		}
+
+		type item struct {
+			CampaignID   string `json:"campaign_id"`
+			CampaignName string `json:"campaign_name"`
+			Status       string `json:"campaign_status"`
+			Total        int    `json:"total"`
+			Sent         int    `json:"sent"`
+			Failed       int    `json:"failed"`
+			Opened       int    `json:"opened"`
+			Clicked      int    `json:"clicked"`
+			OpenRate     string `json:"open_rate"`
+			ClickRate    string `json:"click_rate"`
+		}
+
+		result := make([]item, 0, len(rows))
+		for _, r := range rows {
+			openRate := 0.0
+			clickRate := 0.0
+			if r.Sent > 0 {
+				openRate = float64(r.Opened) / float64(r.Sent) * 100
+				clickRate = float64(r.Clicked) / float64(r.Sent) * 100
+			}
+			result = append(result, item{
+				CampaignID:   r.CampaignID,
+				CampaignName: r.CampaignName,
+				Status:       r.Status,
+				Total:        r.Total,
+				Sent:         r.Sent,
+				Failed:       r.Failed,
+				Opened:       r.Opened,
+				Clicked:      r.Clicked,
+				OpenRate:     fmt.Sprintf("%.1f", openRate),
+				ClickRate:    fmt.Sprintf("%.1f", clickRate),
+			})
+		}
+
+		return e.JSON(http.StatusOK, result)
+	}
+}
+
+// ─── Campaign statistics (single campaign, kept for backwards compat) ─────────
 
 type campaignStatsRow struct {
 	Total   int `db:"total"`
@@ -292,10 +587,10 @@ func buildCampaignStats(app core.App) func(*core.RequestEvent) error {
 		err := app.DB().NewQuery(`
 			SELECT
 				COUNT(*) AS total,
-				SUM(CASE WHEN status IN ('envoye','ouvert','clique') THEN 1 ELSE 0 END) AS sent,
-				SUM(CASE WHEN status = 'echoue' THEN 1 ELSE 0 END) AS failed,
-				SUM(CASE WHEN open_count > 0 THEN 1 ELSE 0 END) AS opened,
-				SUM(CASE WHEN click_count > 0 THEN 1 ELSE 0 END) AS clicked
+				COALESCE(SUM(CASE WHEN status IN ('envoye','ouvert','clique') THEN 1 ELSE 0 END), 0) AS sent,
+				COALESCE(SUM(CASE WHEN status = 'echoue' THEN 1 ELSE 0 END), 0) AS failed,
+				COALESCE(SUM(CASE WHEN open_count > 0 THEN 1 ELSE 0 END), 0) AS opened,
+				COALESCE(SUM(CASE WHEN click_count > 0 THEN 1 ELSE 0 END), 0) AS clicked
 			FROM email_logs
 			WHERE campaign_id = {:campaignId}
 		`).Bind(dbx.Params{"campaignId": campaignID}).One(&stats)
