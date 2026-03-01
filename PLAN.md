@@ -391,7 +391,7 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 ### 7B — Dashboard intelligent (page d'accueil)
 - [x] 7.7 — Widget CA du mois en cours
 - [x] 7.8 — Widget evolution CA vs mois precedent (% et fleche)
-- [ ] 7.9 — Widget objectif atteint (%) avec barre de progression
+- [x] 7.9 — Widget objectif atteint (%) avec barre de progression
 - [x] 7.10 — Widget nouveaux prospects du mois
 - [x] 7.11 — Widget RDV du jour (liste des taches type reunion pour aujourd'hui)
 - [x] 7.12 — Widget taches urgentes / en retard
@@ -434,8 +434,8 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [x] 7.39 — `MarketingStats.tsx` : composant page stats marketing
 - [x] 7.40 — Nombre de leads generes par periode
 - [x] 7.41 — Source des leads (graphique camembert : site_web, email, telephone, salon, recommandation, autre)
-- [ ] 7.42 — Cout par lead (si champ budget renseigne sur campagnes)
-- [ ] 7.43 — ROI des campagnes email (leads generes vs emails envoyes)
+- [x] 7.42 — Cout par lead (si champ budget renseigne sur campagnes)
+- [x] 7.43 — ROI des campagnes email (leads generes vs emails envoyes)
 - [x] 7.44 — Taux d'ouverture et taux de clic emails (depuis email_logs)
 
 ### 7H — Integration et finalisation

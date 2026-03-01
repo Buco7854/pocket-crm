@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { useStats } from '@/hooks/useStats'
 import type { Period } from './PeriodFilter'
 import KpiCard from '@/components/dashboard/KpiCard'
@@ -77,32 +77,44 @@ export default function ClientStats({ period }: Props) {
           {loading ? (
             <Skeleton className="h-52 w-full" />
           ) : data && data.by_city.length > 0 ? (
-            <ResponsiveContainer width="100%" height={210}>
-              <PieChart>
-                <Pie
-                  data={data.by_city}
-                  dataKey="count"
-                  nameKey="city"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  label={(props: { name?: string; percent?: number }) => `${props.name ?? ''} ${((props.percent ?? 0) * 100).toFixed(0)}%`}
-                  labelLine={false}
-                >
-                  {data.by_city.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--color-surface-0)',
-                    border: '1px solid var(--color-surface-200)',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="shrink-0">
+                <ResponsiveContainer width={160} height={160}>
+                  <PieChart>
+                    <Pie
+                      data={data.by_city}
+                      dataKey="count"
+                      nameKey="city"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={72}
+                    >
+                      {data.by_city.map((_, i) => (
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        background: 'var(--color-surface-0)',
+                        border: '1px solid var(--color-surface-200)',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        color: 'var(--color-surface-900)',
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <ul className="space-y-1.5 w-full min-w-0">
+                {data.by_city.map((c, i) => (
+                  <li key={c.city} className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-sm shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                    <span className="text-sm text-surface-700 flex-1 truncate">{c.city}</span>
+                    <span className="text-sm font-semibold text-surface-900 tabular-nums">{c.count}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : (
             <div className="h-52 flex items-center justify-center">
               <p className="text-sm text-surface-400">{t('common.noResults')}</p>
@@ -116,34 +128,44 @@ export default function ClientStats({ period }: Props) {
           {loading ? (
             <Skeleton className="h-52 w-full" />
           ) : data && data.by_industry.length > 0 ? (
-            <ResponsiveContainer width="100%" height={210}>
-              <PieChart>
-                <Pie
-                  data={data.by_industry}
-                  dataKey="count"
-                  nameKey="industry"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={70}
-                >
-                  {data.by_industry.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--color-surface-0)',
-                    border: '1px solid var(--color-surface-200)',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                  }}
-                />
-                <Legend
-                  iconSize={8}
-                  wrapperStyle={{ fontSize: '11px' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="shrink-0">
+                <ResponsiveContainer width={160} height={160}>
+                  <PieChart>
+                    <Pie
+                      data={data.by_industry}
+                      dataKey="count"
+                      nameKey="industry"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={72}
+                    >
+                      {data.by_industry.map((_, i) => (
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        background: 'var(--color-surface-0)',
+                        border: '1px solid var(--color-surface-200)',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        color: 'var(--color-surface-900)',
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <ul className="space-y-1.5 w-full min-w-0">
+                {data.by_industry.map((ind, i) => (
+                  <li key={ind.industry} className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-sm shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                    <span className="text-sm text-surface-700 flex-1 truncate">{ind.industry}</span>
+                    <span className="text-sm font-semibold text-surface-900 tabular-nums">{ind.count}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : (
             <div className="h-52 flex items-center justify-center">
               <p className="text-sm text-surface-400">{t('common.noResults')}</p>

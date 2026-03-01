@@ -100,6 +100,51 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* Revenue Goal Widget */}
+      {(loading || (data && Number(data.revenue_goal_pct) > 0)) && (
+        <div className="rounded-xl bg-surface-0 border border-surface-200 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-sm font-semibold text-surface-900">{t('stats.dashboard.revenueGoal')}</h3>
+              <p className="text-xs text-surface-400 mt-0.5">{t('stats.dashboard.revenueGoalHint')}</p>
+            </div>
+            {!loading && data && (
+              <span className={`text-lg font-bold tabular-nums ${
+                Number(data.revenue_goal_pct) >= 100
+                  ? 'text-green-600'
+                  : Number(data.revenue_goal_pct) >= 70
+                  ? 'text-orange-500'
+                  : 'text-red-500'
+              }`}>
+                {Math.min(Number(data.revenue_goal_pct), 999).toFixed(0)}%
+              </span>
+            )}
+          </div>
+          {loading ? (
+            <Skeleton className="h-3 w-full rounded-full" />
+          ) : data ? (
+            <div className="space-y-1.5">
+              <div className="w-full bg-surface-100 rounded-full h-3 overflow-hidden">
+                <div
+                  className={`h-3 rounded-full transition-all duration-700 ${
+                    Number(data.revenue_goal_pct) >= 100
+                      ? 'bg-green-500'
+                      : Number(data.revenue_goal_pct) >= 70
+                      ? 'bg-orange-400'
+                      : 'bg-red-400'
+                  }`}
+                  style={{ width: `${Math.min(Number(data.revenue_goal_pct), 100)}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-surface-400">
+                <span>{fmtRevenue(data.revenue.current)}</span>
+                <span>{t('stats.dashboard.goalAchieved')}: {fmtRevenue(data.revenue.previous)}</span>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
+
       {/* Revenue trend + Pipeline */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Revenue chart */}
@@ -130,6 +175,7 @@ export default function DashboardPage() {
                     border: '1px solid var(--color-surface-200)',
                     borderRadius: '8px',
                     fontSize: '12px',
+                    color: 'var(--color-surface-900)',
                   }}
                 />
                 <Line

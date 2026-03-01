@@ -546,7 +546,7 @@ func Run(app core.App, force bool) error {
 		return fmt.Errorf("find campaigns: %w", err)
 	}
 
-	mkCampaign := func(name, status string, total, sent, failed int, creator *core.Record) *core.Record {
+	mkCampaign := func(name, status string, total, sent, failed int, budget float64, creator *core.Record) *core.Record {
 		c := core.NewRecord(campaignsCol)
 		c.Set("name", name)
 		c.Set("template", tplNewsletter.Id)
@@ -554,6 +554,7 @@ func Run(app core.App, force bool) error {
 		c.Set("total", total)
 		c.Set("sent", sent)
 		c.Set("failed", failed)
+		c.Set("budget", budget)
 		c.Set("contact_ids", []string{})
 		c.Set("created_by", creator.Id)
 		if err := app.Save(c); err != nil {
@@ -562,10 +563,10 @@ func Run(app core.App, force bool) error {
 		return c
 	}
 
-	camp1 := mkCampaign("Newsletter Automne 2025",   "envoye",   12, 11, 1, alice)
-	camp2 := mkCampaign("Promo Fin d'Année 2025",    "envoye",   10, 10, 0, bob)
-	camp3 := mkCampaign("Newsletter Q1 2026",        "envoye",   15, 14, 1, alice)
-	camp4 := mkCampaign("Webinaire IA Agentic 2026", "en_cours",  8,  8, 0, bob)
+	camp1 := mkCampaign("Newsletter Automne 2025",   "envoye",   12, 11, 1, 500.0,  alice)
+	camp2 := mkCampaign("Promo Fin d'Année 2025",    "envoye",   10, 10, 0, 1200.0, bob)
+	camp3 := mkCampaign("Newsletter Q1 2026",        "envoye",   15, 14, 1, 750.0,  alice)
+	camp4 := mkCampaign("Webinaire IA Agentic 2026", "en_cours",  8,  8, 0, 2000.0, bob)
 
 	emailLogsCol, err := app.FindCollectionByNameOrId("email_logs")
 	if err != nil {

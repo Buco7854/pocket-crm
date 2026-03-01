@@ -149,6 +149,14 @@ func buildDashboardStats(app core.App) func(*core.RequestEvent) error {
 			ORDER BY month ASC
 		`).All(&revTrendRows) //nolint:errcheck
 
+		// Revenue goal: current vs previous period as percentage
+		goalPct := 0.0
+		if revPrevious > 0 {
+			goalPct = revCurrent / revPrevious * 100
+		} else if revCurrent > 0 {
+			goalPct = 100
+		}
+
 		return e.JSON(http.StatusOK, map[string]interface{}{
 			"revenue": map[string]interface{}{
 				"current":       revCurrent,
@@ -165,6 +173,7 @@ func buildDashboardStats(app core.App) func(*core.RequestEvent) error {
 			"pipeline_by_stage": pipelineRows,
 			"recent_activities": activityRows,
 			"revenue_trend":     revTrendRows,
+			"revenue_goal_pct":  fmt.Sprintf("%.1f", goalPct),
 		})
 	}
 }
@@ -609,6 +618,33 @@ func buildMarketingStats(app core.App) func(*core.RequestEvent) error {
 			clickRate = float64(emailRow.Clicked) / float64(emailRow.Sent) * 100
 		}
 
+		// Cost per lead: total campaign budget (where set) / total leads from email campaigns
+		var totalBudget float64
+		app.DB().NewQuery(`
+			SELECT COALESCE(SUM(budget), 0)
+			FROM campaigns
+			WHERE budget IS NOT NULL AND budget > 0 AND created >= {:start}
+		`).Bind(dbx.Params{"start": start}).Row(&totalBudget) //nolint:errcheck
+
+		// Leads generated from email campaigns (leads where source = 'email' in current period)
+		var emailLeads int
+		app.DB().NewQuery(`
+			SELECT COUNT(*) FROM leads WHERE source = 'email' AND created >= {:start}
+		`).Bind(dbx.Params{"start": start}).Row(&emailLeads) //nolint:errcheck
+
+		costPerLead := ""
+		if totalBudget > 0 && emailLeads > 0 {
+			costPerLead = fmt.Sprintf("%.0f", totalBudget/float64(emailLeads))
+		} else if totalBudget > 0 {
+			costPerLead = fmt.Sprintf("%.0f", totalBudget)
+		}
+
+		// Email ROI: leads generated per 100 emails sent
+		emailRoi := 0.0
+		if emailRow.Sent > 0 {
+			emailRoi = float64(totalLeads) / float64(emailRow.Sent) * 100
+		}
+
 		return e.JSON(http.StatusOK, map[string]interface{}{
 			"leads_by_month": leadsByMonth,
 			"by_source":      bySource,
@@ -619,6 +655,9 @@ func buildMarketingStats(app core.App) func(*core.RequestEvent) error {
 				"open_rate":  fmt.Sprintf("%.1f", openRate),
 				"click_rate": fmt.Sprintf("%.1f", clickRate),
 			},
+			"cost_per_lead":  costPerLead,
+			"email_roi":      fmt.Sprintf("%.1f", emailRoi),
+			"has_budget":     totalBudget > 0,
 		})
 	}
 }

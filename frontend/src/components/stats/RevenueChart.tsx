@@ -73,6 +73,7 @@ export default function RevenueChart({
                 border: '1px solid var(--color-surface-200)',
                 borderRadius: '8px',
                 fontSize: '12px',
+                color: 'var(--color-surface-900)',
               }}
             />
             <Line

@@ -96,12 +96,14 @@ export default function SalesStats({ period }: Props) {
                   width={80}
                 />
                 <Tooltip
+                  cursor={{ fill: 'var(--color-surface-100)', opacity: 0.6 }}
                   formatter={(v: unknown) => [fmtRevenue(Number(v)), t('stats.kpi.revenue')]}
                   contentStyle={{
                     background: 'var(--color-surface-0)',
                     border: '1px solid var(--color-surface-200)',
                     borderRadius: '8px',
                     fontSize: '12px',
+                    color: 'var(--color-surface-900)',
                   }}
                 />
                 <Bar dataKey="revenue" fill="var(--color-primary-500)" radius={[0, 4, 4, 0]} />
