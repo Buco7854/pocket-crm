@@ -190,7 +190,7 @@ export interface CampaignRun {
 export type CampaignType = 'email' | 'ads' | 'social' | 'event' | 'seo' | 'autre'
 
 /** Campaign statuses */
-export type CampaignStatus = 'brouillon' | 'en_cours' | 'envoye' | 'termine'
+export type CampaignStatus = 'brouillon' | 'programmee' | 'en_cours' | 'envoye' | 'termine'
 
 export interface Campaign extends BaseModel {
   name: string
@@ -203,6 +203,7 @@ export interface Campaign extends BaseModel {
   failed: number
   campaign_key: string
   created_by: string
+  scheduled_at?: string
 }
 
 /** Activity types */

@@ -1,11 +1,21 @@
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Mail, Phone, Building2, User } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
-import type { Contact, ContactTag } from '@/types/models'
+import { useEmailLogs } from '@/hooks/useEmailLogs'
+import type { Contact, ContactTag, EmailLogStatus } from '@/types/models'
 import type { BadgeVariant } from '@/components/ui/Badge'
 
 const tagVariant: Record<ContactTag, BadgeVariant> = {
   prospect: 'primary', client: 'success', partenaire: 'info', fournisseur: 'warning',
+}
+
+const logStatusVariant: Record<EmailLogStatus, BadgeVariant> = {
+  envoye: 'success',
+  echoue: 'danger',
+  en_attente: 'warning',
+  ouvert: 'info',
+  clique: 'primary',
 }
 
 interface Props {
@@ -15,6 +25,13 @@ interface Props {
 export default function ContactDetail({ contact }: Props) {
   const { t, i18n } = useTranslation()
   const fmt = (date: string) => date ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(date)) : '—'
+  const fmtDateTime = (date: string) => date ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(date)) : '—'
+
+  const { items: commLogs, loading: logsLoading, fetchLogs } = useEmailLogs()
+
+  useEffect(() => {
+    fetchLogs({ contactId: contact.id })
+  }, [contact.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-6">
@@ -66,6 +83,38 @@ export default function ContactDetail({ contact }: Props) {
           <p className="text-sm text-surface-600 whitespace-pre-wrap">{contact.notes}</p>
         </div>
       )}
+
+      {/* Communication history */}
+      <div className="border-t border-surface-200 pt-4">
+        <h4 className="text-sm font-medium text-surface-700 mb-3">{t('contacts.communicationHistory')}</h4>
+        {logsLoading ? (
+          <div className="flex justify-center py-3">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-600 border-t-transparent" />
+          </div>
+        ) : commLogs.length === 0 ? (
+          <p className="text-sm text-surface-400">{t('contacts.noCommunications')}</p>
+        ) : (
+          <div className="divide-y divide-surface-100">
+            {commLogs.slice(0, 20).map((log) => (
+              <div key={log.id} className="flex items-center gap-3 py-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-surface-700 truncate">{log.subject}</p>
+                  <p className="text-xs text-surface-400">{fmtDateTime(log.sent_at)}</p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Badge variant={logStatusVariant[log.status]} size="sm">{t(`emailLogStatus.${log.status}`)}</Badge>
+                  {log.open_count > 0 && (
+                    <span className="text-xs text-surface-400 tabular-nums">{log.open_count} ouv.</span>
+                  )}
+                  {log.click_count > 0 && (
+                    <span className="text-xs text-surface-400 tabular-nums">{log.click_count} clics</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

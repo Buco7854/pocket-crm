@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Send, Plus } from 'lucide-react'
+import { Send, Plus, Clock } from 'lucide-react'
 import { useEmailTemplates } from '@/hooks/useEmailTemplates'
 import { useCollection } from '@/hooks/useCollection'
 import { useDeleteConfirm } from '@/hooks/useDeleteConfirm'
@@ -23,9 +23,19 @@ import { useAuthStore } from '@/store/authStore'
 
 const statusVariant: Record<CampaignStatus, BadgeVariant> = {
   brouillon: 'default',
+  programmee: 'warning',
   en_cours: 'info',
   envoye: 'success',
   termine: 'default',
+}
+
+/** Convert a PocketBase/ISO date string to the value expected by datetime-local inputs */
+function toDatetimeLocal(isoStr: string | undefined): string {
+  if (!isoStr) return ''
+  const d = new Date(isoStr)
+  if (isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 export default function EmailCampaignList() {
@@ -54,6 +64,7 @@ export default function EmailCampaignList() {
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
   const [contactOptions, setContactOptions] = useState<{ value: string; label: string }[]>([])
   const [loadingContacts, setLoadingContacts] = useState(false)
+  const [scheduledAt, setScheduledAt] = useState('')
 
   const fmt = (d: string) => d ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(d)) : '—'
 
@@ -98,6 +109,7 @@ export default function EmailCampaignList() {
     setName('')
     setSelectedTemplate('')
     setSelectedContacts([])
+    setScheduledAt('')
     setError(null)
     loadContacts()
     setModalOpen(true)
@@ -108,6 +120,7 @@ export default function EmailCampaignList() {
     setName(campaign.name)
     setSelectedTemplate(campaign.template || '')
     setSelectedContacts(campaign.contact_ids || [])
+    setScheduledAt(toDatetimeLocal(campaign.scheduled_at))
     setError(null)
     loadContacts()
     setSelected(null)
@@ -125,12 +138,16 @@ export default function EmailCampaignList() {
     setSaving(true)
     setError(null)
     try {
+      const scheduledAtISO = scheduledAt ? new Date(scheduledAt).toISOString() : null
+      const newStatus: CampaignStatus = scheduledAt ? 'programmee' : 'brouillon'
       if (editingCampaign) {
         await pb.collection('campaigns').update(editingCampaign.id, {
           name,
           template: selectedTemplate,
           contact_ids: selectedContacts,
           total: selectedContacts.length,
+          scheduled_at: scheduledAtISO,
+          status: newStatus,
         })
       } else {
         await pb.collection('campaigns').create({
@@ -138,11 +155,12 @@ export default function EmailCampaignList() {
           type: 'email',
           template: selectedTemplate,
           contact_ids: selectedContacts,
-          status: 'brouillon',
+          status: newStatus,
           total: selectedContacts.length,
           sent: 0,
           failed: 0,
           created_by: user?.id,
+          scheduled_at: scheduledAtISO,
         })
       }
       setModalOpen(false)
@@ -152,6 +170,19 @@ export default function EmailCampaignList() {
       setError(err?.message || t('common.error'))
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleUnschedule(campaign: Campaign) {
+    try {
+      await pb.collection('campaigns').update(campaign.id, {
+        status: 'brouillon',
+        scheduled_at: null,
+      })
+      setSelected(null)
+      loadCampaigns()
+    } catch (err: any) {
+      setError(err?.message || t('common.error'))
     }
   }
 
@@ -176,7 +207,7 @@ export default function EmailCampaignList() {
 
   const templateOptions = templates.map((tpl: EmailTemplate) => ({ value: tpl.id, label: tpl.name }))
 
-  const statuses: CampaignStatus[] = ['brouillon', 'en_cours', 'envoye']
+  const statuses: CampaignStatus[] = ['brouillon', 'programmee', 'en_cours', 'envoye']
 
   const filters: FilterOption[] = [
     {
@@ -189,7 +220,17 @@ export default function EmailCampaignList() {
   const columns: TableColumn<Campaign>[] = [
     {
       key: 'name', labelKey: 'fields.name', sortable: true,
-      render: (v) => <span className="font-medium">{v as string}</span>,
+      render: (v, row) => (
+        <div>
+          <span className="font-medium">{v as string}</span>
+          {row.scheduled_at && row.status === 'programmee' && (
+            <p className="text-xs text-warning-600 flex items-center gap-1 mt-0.5">
+              <Clock className="h-3 w-3" />
+              {fmt(row.scheduled_at)}
+            </p>
+          )}
+        </div>
+      ),
     },
     {
       key: 'template', labelKey: 'entities.emailTemplate',
@@ -270,6 +311,7 @@ export default function EmailCampaignList() {
             onEdit={() => openEdit(selected)}
             onDelete={() => openDelete(selected)}
             onSend={() => handleSendCampaign(selected)}
+            onUnschedule={() => handleUnschedule(selected)}
           />
         )}
       </Modal>
@@ -284,7 +326,11 @@ export default function EmailCampaignList() {
           <>
             <Button variant="secondary" onClick={() => setModalOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleSave} loading={saving} disabled={!selectedTemplate}>
-              {editingCampaign ? t('common.save') : t('email.saveDraft')}
+              {editingCampaign
+                ? t('common.save')
+                : scheduledAt
+                  ? t('campaigns.schedule')
+                  : t('email.saveDraft')}
             </Button>
           </>
         }
@@ -324,6 +370,25 @@ export default function EmailCampaignList() {
               searchable
             />
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-surface-700 mb-1">
+              {t('campaigns.scheduleAt')}
+              <span className="text-surface-400 font-normal ml-1">({t('common.optional') ?? 'optionnel'})</span>
+            </label>
+            <input
+              type="datetime-local"
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+              className="w-full rounded-lg border border-surface-300 px-3 py-2 text-sm text-surface-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            />
+            {scheduledAt && (
+              <p className="mt-1 text-xs text-warning-600 flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {t('campaigns.scheduledFor', { date: fmt(new Date(scheduledAt).toISOString()) })}
+              </p>
+            )}
+          </div>
         </div>
       </Modal>
 

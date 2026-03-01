@@ -42,6 +42,9 @@ func main() {
 	// Phase 6 — Email API routes + welcome hook
 	hooks.RegisterEmailRoutes(app)
 
+	// Phase 6 — Scheduled campaign background sender (60s cron)
+	hooks.RegisterCampaignScheduler(app)
+
 	// Phase 7 — Analytics & statistics routes
 	hooks.RegisterStatsRoutes(app)
 
