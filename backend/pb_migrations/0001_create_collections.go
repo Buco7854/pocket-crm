@@ -433,6 +433,7 @@ func init() {
 		campaigns.Fields.Add(&core.NumberField{Name: "total", Min: floatPtr(0)})
 		campaigns.Fields.Add(&core.NumberField{Name: "sent", Min: floatPtr(0)})
 		campaigns.Fields.Add(&core.NumberField{Name: "failed", Min: floatPtr(0)})
+		campaigns.Fields.Add(&core.NumberField{Name: "budget", Min: floatPtr(0)})
 		campaigns.Fields.Add(&core.TextField{Name: "campaign_key", Max: 50})
 		campaigns.Fields.Add(&core.RelationField{Name: "created_by", CollectionId: users.Id, MaxSelect: 1, Required: true})
 		campaigns.Fields.Add(&core.AutodateField{Name: "created", OnCreate: true})
