@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Send, Plus, Clock } from 'lucide-react'
+import { Send, Clock } from 'lucide-react'
 import { useEmailTemplates } from '@/hooks/useEmailTemplates'
 import { useCollection } from '@/hooks/useCollection'
 import { useDeleteConfirm } from '@/hooks/useDeleteConfirm'
@@ -38,7 +38,11 @@ function toDatetimeLocal(isoStr: string | undefined): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-export default function EmailCampaignList() {
+interface Props {
+  createTrigger?: number
+}
+
+export default function EmailCampaignList({ createTrigger }: Props) {
   const { t, i18n } = useTranslation()
   const { user } = useAuthStore()
   const { items: templates, fetchTemplates } = useEmailTemplates()
@@ -114,6 +118,11 @@ export default function EmailCampaignList() {
     loadContacts()
     setModalOpen(true)
   }
+
+  useEffect(() => {
+    if (createTrigger) openCreate()
+  }, [createTrigger]) // eslint-disable-line react-hooks/exhaustive-deps
+
 
   function openEdit(campaign: Campaign) {
     setEditingCampaign(campaign)
@@ -257,13 +266,6 @@ export default function EmailCampaignList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-surface-500">{t('email.campaignsHint')}</p>
-        <Button icon={<Plus className="h-4 w-4" />} onClick={openCreate} className="shrink-0 self-start sm:self-auto">
-          {t('email.newCampaign')}
-        </Button>
-      </div>
-
       {error && <Alert type="error" dismissible>{error}</Alert>}
 
       <SearchFilter

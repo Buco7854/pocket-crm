@@ -80,6 +80,7 @@
     "confirmDeleteMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
     "addEntity": "Add {{entity}}",
     "editEntity": "Edit {{entity}}",
+    "optional": "optional",
     "markComplete": "Mark as complete",
     "reopen": "Reopen",
     "nSelected": "{{count}} selected"
@@ -306,6 +307,7 @@
   "campaign": {
     "type": "Campaign type",
     "add": "Add campaign",
+    "addEmail": "Add email campaign",
     "edit": "Edit campaign"
   },
   "activityType": {
@@ -464,6 +466,7 @@
   "campaigns": {
     "description": "Manage all your marketing campaigns in one place.",
     "otherTypes": "Other campaigns",
+    "otherHint": "Track your non-email campaigns (social, events, SEO…).",
     "scheduleAt": "Schedule sending",
     "scheduledFor": "Scheduled for {{date}}",
     "schedule": "Schedule",

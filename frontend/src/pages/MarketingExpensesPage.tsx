@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Euro, Plus, Pencil, Trash2, CalendarDays } from 'lucide-react'
+import { Plus, Pencil, Trash2, CalendarDays } from 'lucide-react'
 import { useMarketingExpenses } from '@/hooks/useMarketingExpenses'
 import { useAuthStore } from '@/store/authStore'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -122,15 +122,7 @@ export default function MarketingExpensesPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/30">
-            <Euro className="h-5 w-5 text-primary-600" strokeWidth={1.75} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold text-surface-900">{t('marketingExpenses.title')}</h1>
-            <p className="text-sm text-surface-500">{t('marketingExpenses.description')}</p>
-          </div>
-        </div>
+        <h1 className="text-2xl font-semibold text-surface-900">{t('marketingExpenses.title')}</h1>
         <Button icon={<Plus className="h-4 w-4" strokeWidth={2} />} onClick={() => { setEditing(null); setFormOpen(true) }}>
           {t('marketingExpenses.addExpense')}
         </Button>

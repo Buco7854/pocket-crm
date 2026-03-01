@@ -34,11 +34,28 @@ func SendTemplatedEmail(app core.App, params EmailSendParams) error {
 		return fmt.Errorf("template %q not found: %w", params.TemplateID, err)
 	}
 
-	// 2. Render subject and body
+	// 2. Inject date variables (cannot be overridden by caller)
+	now := time.Now()
+	dateVars := map[string]string{
+		"day":   fmt.Sprintf("%02d", now.Day()),
+		"month": fmt.Sprintf("%02d", int(now.Month())),
+		"year":  fmt.Sprintf("%d", now.Year()),
+		"date":  now.Format("02/01/2006"),
+	}
+	if params.Variables == nil {
+		params.Variables = map[string]string{}
+	}
+	for k, v := range dateVars {
+		if _, exists := params.Variables[k]; !exists {
+			params.Variables[k] = v
+		}
+	}
+
+	// 3. Render subject and body
 	subject := renderVars(template.GetString("subject"), params.Variables)
 	body := renderVars(template.GetString("body"), params.Variables)
 
-	// 3. Create email_log with status "en_attente"
+	// 4. Create email_log with status "en_attente"
 	logCol, err := app.FindCollectionByNameOrId("email_logs")
 	if err != nil {
 		return fmt.Errorf("email_logs collection not found: %w", err)
@@ -64,7 +81,7 @@ func SendTemplatedEmail(app core.App, params EmailSendParams) error {
 		return fmt.Errorf("failed to create email_log: %w", err)
 	}
 
-	// 4. Inject 1×1 tracking pixel at end of HTML body
+	// 5. Inject 1×1 tracking pixel at end of HTML body
 	if params.BaseURL != "" {
 		pixel := fmt.Sprintf(
 			`<img src="%s/api/crm/email/track-open/%s" width="1" height="1" style="display:none" alt="" />`,
@@ -74,7 +91,7 @@ func SendTemplatedEmail(app core.App, params EmailSendParams) error {
 		body += "\n" + pixel
 	}
 
-	// 5. Resolve sender info from PocketBase settings
+	// 6. Resolve sender info from PocketBase settings
 	senderAddr := app.Settings().Meta.SenderAddress
 	senderName := app.Settings().Meta.SenderName
 	if senderAddr == "" {
@@ -84,7 +101,7 @@ func SendTemplatedEmail(app core.App, params EmailSendParams) error {
 		senderName = "Pocket CRM"
 	}
 
-	// 6. Build and send message
+	// 7. Build and send message
 	msg := &mailer.Message{
 		From:    mail.Address{Address: senderAddr, Name: senderName},
 		To:      []mail.Address{{Address: params.RecipientEmail, Name: params.RecipientName}},
@@ -94,7 +111,7 @@ func SendTemplatedEmail(app core.App, params EmailSendParams) error {
 
 	sendErr := app.NewMailClient().Send(msg)
 
-	// 7. Update log with result
+	// 8. Update log with result
 	if sendErr != nil {
 		logRec.Set("status", "echoue")
 		logRec.Set("error_message", sendErr.Error())

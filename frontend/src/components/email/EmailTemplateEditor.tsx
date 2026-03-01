@@ -19,7 +19,7 @@ import EmailTemplateDetail from '@/components/email/EmailTemplateDetail'
 import type { EmailTemplate, EmailTemplateType } from '@/types/models'
 
 const TEMPLATE_TYPES: EmailTemplateType[] = ['marketing', 'transactionnel', 'relance', 'bienvenue']
-const VARIABLES_HINT = ['{{first_name}}', '{{last_name}}', '{{email}}', '{{company}}']
+const VARIABLES_HINT = ['{{first_name}}', '{{last_name}}', '{{email}}', '{{company}}', '{{day}}', '{{month}}', '{{year}}', '{{date}}']
 
 interface TemplateFormData {
   name: string

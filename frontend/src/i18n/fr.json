@@ -113,6 +113,7 @@
     "confirmDeleteMessage": "Êtes-vous sûr de vouloir supprimer « {{name}} » ? Cette action est irréversible.",
     "addEntity": "Ajouter {{entity}}",
     "editEntity": "Modifier {{entity}}",
+    "optional": "optionnel",
     "markComplete": "Marquer terminée",
     "reopen": "Réouvrir",
     "nSelected": "{{count}} sélectionnés"
@@ -306,6 +307,7 @@
   "campaign": {
     "type": "Type de campagne",
     "add": "Ajouter une campagne",
+    "addEmail": "Ajouter une campagne email",
     "edit": "Modifier la campagne"
   },
   "activityType": {
@@ -464,6 +466,7 @@
   "campaigns": {
     "description": "Gérez toutes vos campagnes marketing en un seul endroit.",
     "otherTypes": "Autres campagnes",
+    "otherHint": "Suivez vos campagnes non-email (réseaux sociaux, événements, SEO…).",
     "scheduleAt": "Planifier l'envoi",
     "scheduledFor": "Envoi prévu le {{date}}",
     "schedule": "Programmer",

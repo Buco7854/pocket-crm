@@ -433,9 +433,10 @@ func init() {
 		campaigns.Fields.Add(&core.SelectField{
 			Name:      "status",
 			Required:  true,
-			Values:    []string{"brouillon", "en_cours", "envoye", "termine"},
+			Values:    []string{"brouillon", "programmee", "en_cours", "envoye", "termine"},
 			MaxSelect: 1,
 		})
+		campaigns.Fields.Add(&core.DateField{Name: "scheduled_at"})
 		campaigns.Fields.Add(&core.NumberField{Name: "total", Min: floatPtr(0)})
 		campaigns.Fields.Add(&core.NumberField{Name: "sent", Min: floatPtr(0)})
 		campaigns.Fields.Add(&core.NumberField{Name: "failed", Min: floatPtr(0)})
