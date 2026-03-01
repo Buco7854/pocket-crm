@@ -1,0 +1,178 @@
+import { useTranslation } from 'react-i18next'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
+import { useStats } from '@/hooks/useStats'
+import type { Period } from './PeriodFilter'
+import KpiCard from '@/components/dashboard/KpiCard'
+import RevenueChart from './RevenueChart'
+import Skeleton from '@/components/dashboard/Skeleton'
+import { Clock, TrendingUp, FileText } from 'lucide-react'
+
+interface InvoiceStatusRow {
+  status: string
+  count: number
+  amount: number
+}
+
+interface ForecastRow {
+  stage: string
+  total_amount: number
+  weighted: number
+}
+
+interface FinancialData {
+  by_status: InvoiceStatusRow[]
+  avg_payment_delay: string
+  forecast: string
+  forecast_by_stage: ForecastRow[]
+  revenue_by_month: { month: string; amount: number }[]
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  payee:     '#10b981',
+  emise:     '#3b82f6',
+  en_retard: '#ef4444',
+  brouillon: '#94a3b8',
+  annulee:   '#d1d5db',
+}
+
+function fmtMoney(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M€`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}k€`
+  return `${n}€`
+}
+
+interface Props {
+  period: Period
+}
+
+export default function FinancialStats({ period }: Props) {
+  const { t } = useTranslation()
+  const { data, loading } = useStats<FinancialData>('financial', period)
+
+  const totalInvoices = data?.by_status.reduce((s, r) => s + r.count, 0) ?? 0
+
+  return (
+    <div className="space-y-6">
+      {/* KPI row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <KpiCard
+          label={t('invoices.invoice')}
+          value={data ? totalInvoices : '—'}
+          icon={<FileText />}
+          color="blue"
+          loading={loading}
+        />
+        <KpiCard
+          label={t('stats.financial.avgDelay')}
+          value={data ? `${data.avg_payment_delay}j` : '—'}
+          icon={<Clock />}
+          color="orange"
+          loading={loading}
+        />
+        <KpiCard
+          label={t('stats.financial.forecast')}
+          value={data ? fmtMoney(Number(data.forecast)) : '—'}
+          icon={<TrendingUp />}
+          color="purple"
+          loading={loading}
+        />
+      </div>
+
+      {/* Invoice status + paid amounts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Pie: count by status */}
+        <div className="rounded-xl bg-surface-0 border border-surface-200 p-5">
+          <h3 className="text-sm font-semibold text-surface-900 mb-4">{t('stats.financial.invoices')} — {t('fields.status')}</h3>
+          {loading ? (
+            <Skeleton className="h-52 w-full" />
+          ) : data && data.by_status.length > 0 ? (
+            <ResponsiveContainer width="100%" height={210}>
+              <PieChart>
+                <Pie
+                  data={data.by_status}
+                  dataKey="count"
+                  nameKey="status"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  label={(props: { name?: string; percent?: number }) => `${t(`invoiceStatus.${props.name ?? ''}`)} ${((props.percent ?? 0) * 100).toFixed(0)}%`}
+                  labelLine={false}
+                >
+                  {data.by_status.map((r, i) => (
+                    <Cell key={i} fill={STATUS_COLORS[r.status] ?? '#94a3b8'} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(v: unknown, _name: unknown, props: { payload?: { status?: string } }) => [String(v), t(`invoiceStatus.${props.payload?.status ?? ''}`)]}
+                  contentStyle={{
+                    background: 'var(--color-surface-0)',
+                    border: '1px solid var(--color-surface-200)',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-52 flex items-center justify-center">
+              <p className="text-sm text-surface-400">{t('empty.invoices')}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Revenue forecast by stage */}
+        <div className="rounded-xl bg-surface-0 border border-surface-200 p-5">
+          <h3 className="text-sm font-semibold text-surface-900 mb-1">{t('stats.financial.forecast')}</h3>
+          <p className="text-xs text-surface-400 mb-4">{t('stats.financial.forecastHint')}</p>
+          {loading ? (
+            <Skeleton className="h-48 w-full" />
+          ) : data && data.forecast_by_stage.length > 0 ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={data.forecast_by_stage}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-surface-200)" />
+                <XAxis
+                  dataKey="stage"
+                  tickFormatter={(v) => t(`status.${v}`)}
+                  tick={{ fontSize: 10, fill: 'var(--color-surface-500)' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: 'var(--color-surface-500)' }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={fmtMoney}
+                />
+                <Tooltip
+                  formatter={(v: unknown, name: unknown) => [fmtMoney(Number(v)), name === 'weighted' ? t('stats.financial.forecast') : t('common.total')]}
+                  labelFormatter={(l: unknown) => t(`status.${String(l)}`)}
+                  contentStyle={{
+                    background: 'var(--color-surface-0)',
+                    border: '1px solid var(--color-surface-200)',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                  }}
+                />
+                <Bar dataKey="total_amount" fill="var(--color-surface-200)" radius={[4, 4, 0, 0]} name="total" />
+                <Bar dataKey="weighted" fill="var(--color-primary-500)" radius={[4, 4, 0, 0]} name="weighted" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-48 flex items-center justify-center">
+              <p className="text-sm text-surface-400">{t('empty.leads')}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Revenue by month (paid invoices) */}
+      <RevenueChart
+        data={(data?.revenue_by_month ?? []).map((r) => ({ month: r.month, revenue: r.amount }))}
+        loading={loading}
+        title={`${t('stats.kpi.revenue')} — ${t('invoiceStatus.payee')}`}
+        dataKey="revenue"
+        color="#10b981"
+      />
+    </div>
+  )
+}

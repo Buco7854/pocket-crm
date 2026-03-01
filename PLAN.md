@@ -330,8 +330,8 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [x] 5.21 — `LeadsPage.tsx`
 - [x] 5.22 — `PipelinePage.tsx`
 - [x] 5.23 — Realtime PocketBase sur leads
-- [ ] 5.24 — Tester tous les CRUD, expands, roles, i18n
-- [ ] 5.25 — Commit
+- [x] 5.24 — Tester tous les CRUD, expands, roles, i18n
+- [x] 5.25 — Commit
 
 ### 5E — Factures (Invoices)
 - [x] 5.26 — Creer collection `invoices` dans PocketBase (migration)
@@ -345,7 +345,7 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [x] 5.34 — Route /invoices dans le router + lien sidebar
 - [x] 5.35 — **Go** `backend/hooks/invoices.go` : hook auto-calcul total TTC, hook alerte facture en retard
 - [x] 5.36 — Donnees de test : 5-10 factures variees (brouillon, emise, payee, en retard)
-- [ ] 5.37 — Commit
+- [x] 5.37 — Commit
 
 ---
 
@@ -381,69 +381,68 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 ## Phase 7 : Dashboard Analytique & Statistiques Completes
 
 ### 7A — Infrastructure dashboard
-- [ ] 7.1 — Installer recharts (ou chart.js + react-chartjs-2)
-- [ ] 7.2 — Hook `useDashboard.ts` : appels API stats + state
-- [ ] 7.3 — **Go** Route GET /api/crm/dashboard-stats : calculs agreg. cote serveur (CA, conversions, pipeline, etc.)
-- [ ] 7.4 — `KpiCard.tsx` : composant carte KPI reutilisable (valeur, evolution, icone, couleur)
-- [ ] 7.5 — Squelettes de chargement (Skeleton) pour tous les widgets
-- [ ] 7.6 — Auto-refresh + refresh manuel + filtre periode (semaine / mois / trimestre / annee)
+- [x] 7.1 — Installer recharts (ou chart.js + react-chartjs-2)
+- [x] 7.2 — Hook `useDashboard.ts` : appels API stats + state
+- [x] 7.3 — **Go** Route GET /api/crm/stats/dashboard : calculs agreg. cote serveur (CA, conversions, pipeline, etc.)
+- [x] 7.4 — `KpiCard.tsx` : composant carte KPI reutilisable (valeur, evolution, icone, couleur)
+- [x] 7.5 — Squelettes de chargement (Skeleton) pour tous les widgets
+- [x] 7.6 — Auto-refresh + refresh manuel + filtre periode (semaine / mois / trimestre / annee)
 
 ### 7B — Dashboard intelligent (page d'accueil)
-- [ ] 7.7 — Widget CA du mois en cours
-- [ ] 7.8 — Widget evolution CA vs mois precedent (% et fleche)
+- [x] 7.7 — Widget CA du mois en cours
+- [x] 7.8 — Widget evolution CA vs mois precedent (% et fleche)
 - [ ] 7.9 — Widget objectif atteint (%) avec barre de progression
-- [ ] 7.10 — Widget nouveaux prospects du mois
-- [ ] 7.11 — Widget RDV du jour (liste des taches type reunion pour aujourd'hui)
-- [ ] 7.12 — Widget taches urgentes / en retard
-- [ ] 7.13 — `ActivityFeed.tsx` : flux d'activite recente (derniers evenements)
-- [ ] 7.14 — `DashboardPage.tsx` — integration de tous les widgets
+- [x] 7.10 — Widget nouveaux prospects du mois
+- [x] 7.11 — Widget RDV du jour (liste des taches type reunion pour aujourd'hui)
+- [x] 7.12 — Widget taches urgentes / en retard
+- [x] 7.13 — `ActivityFeed.tsx` : flux d'activite recente (derniers evenements)
+- [x] 7.14 — `DashboardPage.tsx` — integration de tous les widgets
 
 ### 7C — Statistiques commerciales (Ventes)
-- [ ] 7.15 — `SalesStats.tsx` : composant page stats commerciales
-- [ ] 7.16 — CA total par periode (mois / trimestre / annee) avec graphique evolution
-- [ ] 7.17 — CA par commercial (graphique barres)
-- [ ] 7.18 — Pipeline : nombre d'opportunites, montant total, repartition par etape (graphique barres empilees)
-- [ ] 7.19 — `ConversionFunnel.tsx` : funnel de conversion visuel (Prospect -> Qualifie -> Proposition -> Negoce -> Gagne)
-- [ ] 7.20 — Taux de conversion (Prospect -> Client, Proposition -> Vente, delai moyen de transformation)
-- [ ] 7.21 — `RevenueChart.tsx` : graphique evolution CA dans le temps (line chart)
+- [x] 7.15 — `SalesStats.tsx` : composant page stats commerciales
+- [x] 7.16 — CA total par periode (mois / trimestre / annee) avec graphique evolution
+- [x] 7.17 — CA par commercial (graphique barres)
+- [x] 7.18 — Pipeline : nombre d'opportunites, montant total, repartition par etape (graphique barres empilees)
+- [x] 7.19 — `ConversionFunnel.tsx` : funnel de conversion visuel (Prospect -> Qualifie -> Proposition -> Negoce -> Gagne)
+- [x] 7.20 — Taux de conversion (Prospect -> Client, Proposition -> Vente, delai moyen de transformation)
+- [x] 7.21 — `RevenueChart.tsx` : graphique evolution CA dans le temps (line chart)
 
 ### 7D — Statistiques clients
-- [ ] 7.22 — `ClientStats.tsx` : composant page stats clients
-- [ ] 7.23 — Nombre total de clients, nouveaux clients par periode, clients actifs/inactifs
-- [ ] 7.24 — Segmentation clients : par ville, par secteur d'activite (industry), par taille d'entreprise
-- [ ] 7.25 — Panier moyen (montant moyen des leads gagnes par client)
-- [ ] 7.26 — Lifetime Value (LTV) : valeur totale par client (somme leads gagnes + factures payees)
-- [ ] 7.27 — Top clients les plus rentables (classement)
+- [x] 7.22 — `ClientStats.tsx` : composant page stats clients
+- [x] 7.23 — Nombre total de clients, nouveaux clients par periode, clients actifs/inactifs
+- [x] 7.24 — Segmentation clients : par ville, par secteur d'activite (industry), par taille d'entreprise
+- [x] 7.25 — Panier moyen (montant moyen des leads gagnes par client)
+- [x] 7.26 — Lifetime Value (LTV) : valeur totale par client (somme leads gagnes + factures payees)
+- [x] 7.27 — Top clients les plus rentables (classement)
 
 ### 7E — Performance des commerciaux
-- [ ] 7.28 — `CommercialLeaderboard.tsx` : classement des commerciaux
-- [ ] 7.29 — Nombre d'appels, RDV, emails par commercial (via activities)
-- [ ] 7.30 — Nombre de ventes (leads gagnes) par commercial
-- [ ] 7.31 — Taux de reussite par commercial (leads gagnes / leads totaux)
+- [x] 7.28 — `CommercialLeaderboard.tsx` : classement des commerciaux
+- [x] 7.29 — Nombre d'appels, RDV, emails par commercial (via activities)
+- [x] 7.30 — Nombre de ventes (leads gagnes) par commercial
+- [x] 7.31 — Taux de reussite par commercial (leads gagnes / leads totaux)
 - [ ] 7.32 — Objectifs vs Realise (si objectifs definis dans settings)
-- [ ] 7.33 — Leaderboard : classement type tableau des scores
+- [x] 7.33 — Leaderboard : classement type tableau des scores
 
 ### 7F — Statistiques financieres
-- [ ] 7.34 — `FinancialStats.tsx` : composant page stats financieres
-- [ ] 7.35 — Nombre de factures emises / payees / en retard / annulees
-- [ ] 7.36 — Montant total factures payees vs impayees (graphique camembert)
-- [ ] 7.37 — Delai moyen de paiement (jours entre emission et paiement)
-- [ ] 7.38 — Previsions de revenus : leads en cours ponderes par probabilite (basee sur etape pipeline)
+- [x] 7.34 — `FinancialStats.tsx` : composant page stats financieres
+- [x] 7.35 — Nombre de factures emises / payees / en retard / annulees
+- [x] 7.36 — Montant total factures payees vs impayees (graphique camembert)
+- [x] 7.37 — Delai moyen de paiement (jours entre emission et paiement)
+- [x] 7.38 — Previsions de revenus : leads en cours ponderes par probabilite (basee sur etape pipeline)
 
 ### 7G — Statistiques marketing
-- [ ] 7.39 — `MarketingStats.tsx` : composant page stats marketing
-- [ ] 7.40 — Nombre de leads generes par periode
-- [ ] 7.41 — Source des leads (graphique camembert : site_web, email, telephone, salon, recommandation, autre)
+- [x] 7.39 — `MarketingStats.tsx` : composant page stats marketing
+- [x] 7.40 — Nombre de leads generes par periode
+- [x] 7.41 — Source des leads (graphique camembert : site_web, email, telephone, salon, recommandation, autre)
 - [ ] 7.42 — Cout par lead (si champ budget renseigne sur campagnes)
 - [ ] 7.43 — ROI des campagnes email (leads generes vs emails envoyes)
-- [ ] 7.44 — Taux d'ouverture et taux de clic emails (depuis email_logs)
+- [x] 7.44 — Taux d'ouverture et taux de clic emails (depuis email_logs)
 
 ### 7H — Integration et finalisation
-- [ ] 7.45 — Page `/stats` ou onglets dans DashboardPage regroupant toutes les categories
-- [ ] 7.46 — Navigation entre les sections de stats (onglets ou sous-pages)
-- [ ] 7.47 — Export des stats en CSV (bonus)
-- [ ] 7.48 — Tester avec donnees seed (verifier coherence des chiffres)
-- [ ] 7.49 — Commit
+- [x] 7.45 — Page `/stats` ou onglets dans DashboardPage regroupant toutes les categories
+- [x] 7.46 — Navigation entre les sections de stats (onglets ou sous-pages)
+- [x] 7.48 — Tester avec donnees seed (verifier coherence des chiffres)
+- [x] 7.49 — Commit
 
 ---
 

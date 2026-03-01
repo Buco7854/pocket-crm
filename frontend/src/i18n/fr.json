@@ -12,6 +12,7 @@
     "tasks": "Tâches",
     "invoices": "Factures",
     "email": "Email",
+    "stats": "Statistiques",
     "settings": "Paramètres"
   },
   "invoiceStatus": {
@@ -333,5 +334,73 @@
     "recentActivities": "Activités récentes",
     "pipelineOverview": "Aperçu du pipeline",
     "revenue": "Chiffre d'affaires"
+  },
+  "stats": {
+    "pageDescription": "Analysez vos performances commerciales, clients et financières.",
+    "tabs": {
+      "sales": "Ventes",
+      "clients": "Clients",
+      "commercials": "Commerciaux",
+      "financial": "Finance",
+      "marketing": "Marketing"
+    },
+    "period": {
+      "week": "7 jours",
+      "month": "30 jours",
+      "quarter": "90 jours",
+      "year": "1 an"
+    },
+    "kpi": {
+      "revenue": "Chiffre d'affaires",
+      "prospects": "Nouveaux prospects",
+      "meetings": "Réunions aujourd'hui",
+      "overdueTasks": "Tâches en retard"
+    },
+    "evolution": {
+      "vs": "vs période préc."
+    },
+    "pipeline": {
+      "title": "Pipeline actif"
+    },
+    "recentActivities": "Activités récentes",
+    "noActivities": "Aucune activité récente",
+    "sales": {
+      "revenue": "Évolution du CA",
+      "bySalesperson": "CA par commercial",
+      "pipeline": "Répartition pipeline",
+      "funnel": "Entonnoir de conversion",
+      "conversionRate": "Taux de conversion",
+      "avgCloseDays": "Délai moyen de closing"
+    },
+    "clients": {
+      "total": "Total clients",
+      "new": "Nouveaux clients",
+      "active": "Clients actifs",
+      "segmentation": "Segmentation",
+      "avgBasket": "Panier moyen",
+      "ltv": "Valeur vie client",
+      "topClients": "Top clients"
+    },
+    "commercials": {
+      "activities": "Activités",
+      "calls": "Appels",
+      "emails": "Emails",
+      "meetings": "Réunions",
+      "wins": "Ventes",
+      "successRate": "Taux de succès",
+      "leaderboard": "Classement"
+    },
+    "financial": {
+      "invoices": "Factures",
+      "avgDelay": "Délai moyen de paiement",
+      "forecast": "Prévisionnel",
+      "forecastHint": "Opportunités ouvertes pondérées par probabilité de conversion.",
+      "paidVsUnpaid": "Payé vs Impayé"
+    },
+    "marketing": {
+      "leadsGenerated": "Leads générés",
+      "sources": "Sources de leads",
+      "emailStats": "Performances email"
+    }
   }
 }

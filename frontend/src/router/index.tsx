@@ -15,6 +15,7 @@ const PipelinePage = lazy(() => import('@/pages/PipelinePage'))
 const TasksPage = lazy(() => import('@/pages/TasksPage'))
 const InvoicesPage = lazy(() => import('@/pages/InvoicesPage'))
 const EmailPage = lazy(() => import('@/pages/EmailPage'))
+const StatsPage = lazy(() => import('@/pages/StatsPage'))
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'))
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -87,6 +88,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireRole roles={['admin', 'commercial']}>
             <S><EmailPage /></S>
+          </RequireRole>
+        ),
+      },
+      {
+        path: '/stats',
+        element: (
+          <RequireRole roles={['admin', 'commercial']}>
+            <S><StatsPage /></S>
           </RequireRole>
         ),
       },

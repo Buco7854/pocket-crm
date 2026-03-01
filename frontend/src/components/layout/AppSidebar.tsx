@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
 import {
   LayoutGrid, Users, Building2, TrendingUp, Columns3,
-  FileText,
+  FileText, BarChart3,
   CheckSquare, Mail, Settings, ChevronsLeft,
 } from 'lucide-react'
 
@@ -28,6 +28,7 @@ const allMainNav: NavItem[] = [
   { key: 'tasks', icon: CheckSquare, path: '/tasks' },
   { key: 'invoices', icon: FileText, path: '/invoices', roles: ['admin', 'commercial'] },
   { key: 'email', icon: Mail, path: '/email', roles: ['admin', 'commercial'] },
+  { key: 'stats', icon: BarChart3, path: '/stats', roles: ['admin', 'commercial'] },
 ]
 
 const bottomNav: NavItem[] = [

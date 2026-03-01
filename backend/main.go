@@ -42,6 +42,9 @@ func main() {
 	// Phase 6 — Email API routes + welcome hook
 	hooks.RegisterEmailRoutes(app)
 
+	// Phase 7 — Analytics & statistics routes
+	hooks.RegisterStatsRoutes(app)
+
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
 	}

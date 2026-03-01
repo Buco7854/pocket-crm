@@ -12,6 +12,7 @@
     "tasks": "Tasks",
     "invoices": "Invoices",
     "email": "Email",
+    "stats": "Analytics",
     "settings": "Settings"
   },
   "auth": {
@@ -333,5 +334,73 @@
     "recentActivities": "Recent Activities",
     "pipelineOverview": "Pipeline Overview",
     "revenue": "Revenue"
+  },
+  "stats": {
+    "pageDescription": "Analyze your sales, client, and financial performance.",
+    "tabs": {
+      "sales": "Sales",
+      "clients": "Clients",
+      "commercials": "Sales Team",
+      "financial": "Finance",
+      "marketing": "Marketing"
+    },
+    "period": {
+      "week": "7 days",
+      "month": "30 days",
+      "quarter": "90 days",
+      "year": "1 year"
+    },
+    "kpi": {
+      "revenue": "Revenue",
+      "prospects": "New prospects",
+      "meetings": "Meetings today",
+      "overdueTasks": "Overdue tasks"
+    },
+    "evolution": {
+      "vs": "vs prev. period"
+    },
+    "pipeline": {
+      "title": "Active pipeline"
+    },
+    "recentActivities": "Recent activities",
+    "noActivities": "No recent activity",
+    "sales": {
+      "revenue": "Revenue trend",
+      "bySalesperson": "Revenue by salesperson",
+      "pipeline": "Pipeline breakdown",
+      "funnel": "Conversion funnel",
+      "conversionRate": "Conversion rate",
+      "avgCloseDays": "Avg. days to close"
+    },
+    "clients": {
+      "total": "Total clients",
+      "new": "New clients",
+      "active": "Active clients",
+      "segmentation": "Segmentation",
+      "avgBasket": "Average basket",
+      "ltv": "Lifetime value",
+      "topClients": "Top clients"
+    },
+    "commercials": {
+      "activities": "Activities",
+      "calls": "Calls",
+      "emails": "Emails",
+      "meetings": "Meetings",
+      "wins": "Deals won",
+      "successRate": "Success rate",
+      "leaderboard": "Leaderboard"
+    },
+    "financial": {
+      "invoices": "Invoices",
+      "avgDelay": "Avg. payment delay",
+      "forecast": "Revenue forecast",
+      "forecastHint": "Open leads weighted by conversion probability.",
+      "paidVsUnpaid": "Paid vs Unpaid"
+    },
+    "marketing": {
+      "leadsGenerated": "Leads generated",
+      "sources": "Lead sources",
+      "emailStats": "Email performance"
+    }
   }
 }

@@ -27,7 +27,7 @@ const statusVariant: Record<EmailLogStatus, string> = {
 export default function EmailPage() {
   const { t, i18n } = useTranslation()
   const [activeTab, setActiveTab] = useState<Tab>('templates')
-  const { items: logs, loading, totalItems, totalPages, currentPage, fetchLogs } = useEmailLogs()
+  const { items: logs, loading, totalItems, totalPages, fetchLogs } = useEmailLogs()
   const [historyLoaded, setHistoryLoaded] = useState(false)
   const [historyPage, setHistoryPage] = useState(1)
   const [smtpConfigured, setSmtpConfigured] = useState<boolean | null>(null)
