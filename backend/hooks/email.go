@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -19,6 +20,9 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"pocket-crm/services"
 )
+
+// errCampaignNoContacts is returned by executeCampaignSend when a campaign has no contacts.
+var errCampaignNoContacts = errors.New("campaign has no contacts")
 
 // transparentGIF is a 1×1 transparent GIF pixel, generated once at startup.
 var transparentGIF []byte
@@ -75,11 +79,11 @@ func RegisterEmailRoutes(app core.App) {
 func buildSendEmail(app core.App) func(*core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		var body struct {
-			TemplateID    string            `json:"template_id"`
-			ContactID     string            `json:"contact_id"`      // optional
-			RecipientEmail string           `json:"recipient_email"` // used if no contact_id
-			RecipientName  string           `json:"recipient_name"`  // optional
-			Variables     map[string]string `json:"variables"`
+			TemplateID     string            `json:"template_id"`
+			ContactID      string            `json:"contact_id"`      // optional
+			RecipientEmail string            `json:"recipient_email"` // used if no contact_id
+			RecipientName  string            `json:"recipient_name"`  // optional
+			Variables      map[string]string `json:"variables"`
 		}
 		if err := e.BindBody(&body); err != nil {
 			return e.BadRequestError("Invalid request body", err)
@@ -287,6 +291,153 @@ func buildSMTPStatus(app core.App) func(*core.RequestEvent) error {
 	}
 }
 
+// ─── Core campaign send logic ─────────────────────────────────────────────────
+
+type campaignSendResult struct {
+	RunID     string
+	RunNumber int
+	Sent      int
+	Failed    int
+}
+
+// executeCampaignSend creates a campaign_run, sends emails to all contacts,
+// and updates the campaign status to "envoye". It is called both by the HTTP
+// handler and by the background scheduler.
+func executeCampaignSend(app core.App, campaign *core.Record, senderID string) (*campaignSendResult, error) {
+	campaignId := campaign.Id
+	templateId := campaign.GetString("template")
+
+	// Parse contact_ids from JSON field
+	var contactIDs []string
+	raw, _ := json.Marshal(campaign.Get("contact_ids"))
+	json.Unmarshal(raw, &contactIDs) //nolint:errcheck
+
+	if len(contactIDs) == 0 {
+		return nil, errCampaignNoContacts
+	}
+
+	baseURL := app.Settings().Meta.AppURL
+	now := time.Now().UTC().Format("2006-01-02 15:04:05.000Z")
+
+	// Count existing runs to assign the next run_number
+	var runCount int
+	app.DB().NewQuery("SELECT COUNT(*) FROM campaign_runs WHERE campaign = {:id}"). //nolint:errcheck
+											Bind(dbx.Params{"id": campaignId}).Row(&runCount)
+
+	// Create the campaign_run record before sending
+	runsCol, err := app.FindCollectionByNameOrId("campaign_runs")
+	if err != nil {
+		return nil, fmt.Errorf("campaign_runs collection not found: %w", err)
+	}
+	runRec := core.NewRecord(runsCol)
+	runRec.Set("campaign", campaignId)
+	runRec.Set("run_number", runCount+1)
+	runRec.Set("total", len(contactIDs))
+	runRec.Set("sent_by", senderID)
+	runRec.Set("sent_at", now)
+	if err := app.Save(runRec); err != nil {
+		return nil, fmt.Errorf("failed to create campaign run: %w", err)
+	}
+	runID := runRec.Id
+
+	campaign.Set("status", "en_cours")
+	campaign.Set("total", len(contactIDs))
+	if err := app.Save(campaign); err != nil {
+		return nil, fmt.Errorf("failed to update campaign: %w", err)
+	}
+
+	var sent, failed int
+
+	for _, contactID := range contactIDs {
+		contact, err := app.FindRecordById("contacts", contactID)
+		if err != nil {
+			failed++
+			continue
+		}
+		recipientEmail := contact.GetString("email")
+		if recipientEmail == "" {
+			failed++
+			continue
+		}
+		params := services.EmailSendParams{
+			TemplateID:         templateId,
+			RecipientEmail:     recipientEmail,
+			RecipientName:      contact.GetString("first_name") + " " + contact.GetString("last_name"),
+			RecipientContactID: contactID,
+			SentByID:           senderID,
+			CampaignID:         campaignId,
+			RunID:              runID,
+			BaseURL:            baseURL,
+			Variables: map[string]string{
+				"first_name": contact.GetString("first_name"),
+				"last_name":  contact.GetString("last_name"),
+				"email":      recipientEmail,
+			},
+		}
+		if err := services.SendTemplatedEmail(app, params); err != nil {
+			failed++
+		} else {
+			sent++
+		}
+	}
+
+	// Update run record with final counts
+	runRec.Set("sent", sent)
+	runRec.Set("failed", failed)
+	app.Save(runRec) //nolint:errcheck
+
+	campaign.Set("status", "envoye")
+	campaign.Set("sent", campaign.GetInt("sent")+sent)
+	campaign.Set("failed", campaign.GetInt("failed")+failed)
+	app.Save(campaign) //nolint:errcheck
+
+	return &campaignSendResult{
+		RunID:     runID,
+		RunNumber: runCount + 1,
+		Sent:      sent,
+		Failed:    failed,
+	}, nil
+}
+
+// ─── Background scheduler for programmed campaigns ───────────────────────────
+
+// RegisterCampaignScheduler starts a goroutine (60 s tick) that auto-sends
+// campaigns whose status is "programmee" and scheduled_at <= now.
+func RegisterCampaignScheduler(app core.App) {
+	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		go func() {
+			ticker := time.NewTicker(60 * time.Second)
+			defer ticker.Stop()
+			for range ticker.C {
+				runScheduledCampaigns(app)
+			}
+		}()
+		return se.Next()
+	})
+	log.Println("[hooks] Campaign scheduler registered (60s interval)")
+}
+
+func runScheduledCampaigns(app core.App) {
+	now := time.Now().UTC().Format("2006-01-02 15:04:05.000Z")
+	campaigns, err := app.FindAllRecords("campaigns",
+		dbx.And(
+			dbx.HashExp{"status": "programmee"},
+			dbx.NewExp("scheduled_at > '' AND scheduled_at <= {:now}", dbx.Params{"now": now}),
+		),
+	)
+	if err != nil {
+		log.Printf("[scheduler] Failed to query scheduled campaigns: %v", err)
+		return
+	}
+	for _, campaign := range campaigns {
+		createdBy := campaign.GetString("created_by")
+		log.Printf("[scheduler] Triggering campaign %s (%s)", campaign.Id, campaign.GetString("name"))
+		if _, err := executeCampaignSend(app, campaign, createdBy); err != nil {
+			log.Printf("[scheduler] Campaign %s failed: %v", campaign.Id, err)
+		}
+	}
+}
+
 // ─── Send campaign by campaign record ID ─────────────────────────────────────
 
 func buildSendCampaignById(app core.App) func(*core.RequestEvent) error {
@@ -301,99 +452,20 @@ func buildSendCampaignById(app core.App) func(*core.RequestEvent) error {
 			return e.BadRequestError("Campaign is currently being sent", nil)
 		}
 
-		templateId := campaign.GetString("template")
-
-		// Parse contact_ids from JSON field
-		var contactIDs []string
-		raw, _ := json.Marshal(campaign.Get("contact_ids"))
-		json.Unmarshal(raw, &contactIDs) //nolint:errcheck
-
-		if len(contactIDs) == 0 {
-			return e.BadRequestError("Campaign has no contacts", nil)
-		}
-
-		baseURL := app.Settings().Meta.AppURL
-		sentByID := e.Auth.Id
-		now := time.Now().UTC().Format("2006-01-02 15:04:05.000Z")
-
-		// Count existing runs to assign the next run_number
-		var runCount int
-		app.DB().NewQuery("SELECT COUNT(*) FROM campaign_runs WHERE campaign = {:id}"). //nolint:errcheck
-			Bind(dbx.Params{"id": campaignId}).Row(&runCount)
-
-		// Create the campaign_run record before sending
-		runsCol, err := app.FindCollectionByNameOrId("campaign_runs")
+		result, err := executeCampaignSend(app, campaign, e.Auth.Id)
 		if err != nil {
-			return e.InternalServerError("campaign_runs collection not found", err)
-		}
-		runRec := core.NewRecord(runsCol)
-		runRec.Set("campaign", campaignId)
-		runRec.Set("run_number", runCount+1)
-		runRec.Set("total", len(contactIDs))
-		runRec.Set("sent_by", sentByID)
-		runRec.Set("sent_at", now)
-		if err := app.Save(runRec); err != nil {
-			return e.InternalServerError("Failed to create campaign run", err)
-		}
-		runID := runRec.Id
-
-		campaign.Set("status", "en_cours")
-		campaign.Set("total", len(contactIDs))
-		if err := app.Save(campaign); err != nil {
-			return e.InternalServerError("Failed to update campaign", err)
-		}
-
-		var sent, failed int
-
-		for _, contactID := range contactIDs {
-			contact, err := app.FindRecordById("contacts", contactID)
-			if err != nil {
-				failed++
-				continue
+			if errors.Is(err, errCampaignNoContacts) {
+				return e.BadRequestError("Campaign has no contacts", nil)
 			}
-			recipientEmail := contact.GetString("email")
-			if recipientEmail == "" {
-				failed++
-				continue
-			}
-			params := services.EmailSendParams{
-				TemplateID:         templateId,
-				RecipientEmail:     recipientEmail,
-				RecipientName:      contact.GetString("first_name") + " " + contact.GetString("last_name"),
-				RecipientContactID: contactID,
-				SentByID:           sentByID,
-				CampaignID:         campaignId,
-				RunID:              runID,
-				BaseURL:            baseURL,
-				Variables: map[string]string{
-					"first_name": contact.GetString("first_name"),
-					"last_name":  contact.GetString("last_name"),
-					"email":      recipientEmail,
-				},
-			}
-			if err := services.SendTemplatedEmail(app, params); err != nil {
-				failed++
-			} else {
-				sent++
-			}
+			return e.InternalServerError("Failed to send campaign", err)
 		}
-
-		// Update run record with final counts
-		runRec.Set("sent", sent)
-		runRec.Set("failed", failed)
-		app.Save(runRec) //nolint:errcheck
-
-		campaign.Set("status", "envoye")
-		campaign.Set("sent", campaign.GetInt("sent")+sent)
-		campaign.Set("failed", campaign.GetInt("failed")+failed)
-		app.Save(campaign) //nolint:errcheck
 
 		return e.JSON(http.StatusOK, map[string]interface{}{
 			"campaign_id": campaignId,
-			"run_id":      runID,
-			"run_number":  runCount + 1,
-			"sent":        sent,
-			"failed":      failed,
+			"run_id":      result.RunID,
+			"run_number":  result.RunNumber,
+			"sent":        result.Sent,
+			"failed":      result.Failed,
 		})
 	}
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pencil, Trash2, Send, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Pencil, Trash2, Send, RotateCcw, ChevronLeft, ChevronRight, Clock, CalendarX } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import pb from '@/lib/pocketbase'
@@ -9,6 +9,7 @@ import type { BadgeVariant } from '@/components/ui/Badge'
 
 const statusVariant: Record<CampaignStatus, BadgeVariant> = {
   brouillon: 'default',
+  programmee: 'warning',
   en_cours: 'info',
   envoye: 'success',
   termine: 'default',
@@ -22,14 +23,16 @@ interface Props {
   onEdit: () => void
   onDelete: () => void
   onSend: () => void
+  onUnschedule?: () => void
 }
 
-export default function CampaignDetail({ campaign, sending, onEdit, onDelete, onSend }: Props) {
+export default function CampaignDetail({ campaign, sending, onEdit, onDelete, onSend, onUnschedule }: Props) {
   const { t, i18n } = useTranslation()
   const fmt = (d: string) =>
     d ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(d)) : '—'
   const isSent = campaign.status === 'envoye'
   const isActive = campaign.status === 'en_cours'
+  const isScheduled = campaign.status === 'programmee'
 
   const [runs, setRuns] = useState<CampaignRun[]>([])
   const [runsPage, setRunsPage] = useState(1)
@@ -49,6 +52,12 @@ export default function CampaignDetail({ campaign, sending, onEdit, onDelete, on
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={statusVariant[campaign.status]}>{t(`campaignStatus.${campaign.status}`)}</Badge>
+          {isScheduled && campaign.scheduled_at && (
+            <span className="text-sm text-warning-600 flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" />
+              {fmt(campaign.scheduled_at)}
+            </span>
+          )}
           {isSent && campaign.sent > 0 && (
             <span className="text-sm text-surface-500">{campaign.sent}/{campaign.total} {t('email.sent')}</span>
           )}
@@ -65,7 +74,17 @@ export default function CampaignDetail({ campaign, sending, onEdit, onDelete, on
           <Button variant="danger" size="sm" icon={<Trash2 className="h-3.5 w-3.5" />} onClick={onDelete}>
             {t('common.delete')}
           </Button>
-          {!isActive && (
+          {isScheduled && onUnschedule && (
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<CalendarX className="h-3.5 w-3.5" />}
+              onClick={onUnschedule}
+            >
+              {t('campaigns.unschedule')}
+            </Button>
+          )}
+          {!isActive && !isScheduled && (
             <Button
               variant={isSent ? 'secondary' : 'primary'}
               size="sm"

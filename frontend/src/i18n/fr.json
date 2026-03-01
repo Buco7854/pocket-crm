@@ -290,6 +290,7 @@
   },
   "campaignStatus": {
     "brouillon": "Brouillon",
+    "programmee": "Programmée",
     "en_cours": "En cours",
     "envoye": "Envoyée",
     "termine": "Terminée"
@@ -462,6 +463,14 @@
   },
   "campaigns": {
     "description": "Gérez toutes vos campagnes marketing en un seul endroit.",
-    "otherTypes": "Autres campagnes"
+    "otherTypes": "Autres campagnes",
+    "scheduleAt": "Planifier l'envoi",
+    "scheduledFor": "Envoi prévu le {{date}}",
+    "schedule": "Programmer",
+    "unschedule": "Déprogrammer"
+  },
+  "contacts": {
+    "communicationHistory": "Historique des communications",
+    "noCommunications": "Aucune communication"
   }
 }
