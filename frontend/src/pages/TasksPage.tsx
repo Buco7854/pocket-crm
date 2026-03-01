@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Plus, List, CalendarDays, Bell } from 'lucide-react'
 import Tabs, { type TabItem } from '@/components/ui/Tabs'
@@ -29,14 +30,15 @@ type TabKey = 'list' | 'calendar' | 'reminders'
 
 export default function TasksPage() {
   const { t } = useTranslation()
+  const { tab = 'list' } = useParams<{ tab: string }>()
+  const navigate = useNavigate()
+  const activeTab = tab as TabKey
   const { isAdmin, user } = useAuthStore()
   const { items, totalItems, totalPages, currentPage, loading, error, fetchTasks, create, update, remove } = useTasks()
   const allTasksCollection = useCollection<Task>('tasks')
   const usersCollection = useCollection<User>('users')
   const contactsCollection = useCollection<Contact>('contacts')
   const companiesCollection = useCollection<Company>('companies')
-
-  const [activeTab, setActiveTab] = useState<TabKey>('list')
   const [search, setSearch] = useState('')
   const [filterValues, setFilterValues] = useState<Record<string, string>>({})
   const [sortBy, setSortBy] = useState('due_date')
@@ -149,7 +151,7 @@ export default function TasksPage() {
         </Button>
       </div>
 
-      <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+      <Tabs tabs={tabs} active={activeTab} onChange={(key) => navigate(`/tasks/${key}`)} />
 
       {error && <Alert type="error" dismissible>{error}</Alert>}
 

@@ -6,6 +6,7 @@ import KpiCard from '@/components/dashboard/KpiCard'
 import RevenueChart from './RevenueChart'
 import Skeleton from '@/components/dashboard/Skeleton'
 import { Clock, TrendingUp, FileText } from 'lucide-react'
+import { TOOLTIP_CONTENT_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_ITEM_STYLE, BAR_CURSOR } from './chartUtils'
 
 interface InvoiceStatusRow {
   status: string
@@ -104,13 +105,9 @@ export default function FinancialStats({ period }: Props) {
                     </Pie>
                     <Tooltip
                       formatter={(v: unknown, _name: unknown, props: { payload?: { status?: string } }) => [String(v), t(`invoiceStatus.${props.payload?.status ?? ''}`)]}
-                      contentStyle={{
-                        background: 'var(--color-surface-0)',
-                        border: '1px solid var(--color-surface-200)',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        color: 'var(--color-surface-900)',
-                      }}
+                      contentStyle={TOOLTIP_CONTENT_STYLE}
+                      labelStyle={TOOLTIP_LABEL_STYLE}
+                      itemStyle={TOOLTIP_ITEM_STYLE}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -156,18 +153,14 @@ export default function FinancialStats({ period }: Props) {
                   tickFormatter={fmtMoney}
                 />
                 <Tooltip
-                  cursor={{ fill: 'var(--color-surface-100)', opacity: 0.6 }}
+                  cursor={BAR_CURSOR}
                   formatter={(v: unknown, name: unknown) => [fmtMoney(Number(v)), name === 'weighted' ? t('stats.financial.forecast') : t('common.total')]}
                   labelFormatter={(l: unknown) => t(`status.${String(l)}`)}
-                  contentStyle={{
-                    background: 'var(--color-surface-0)',
-                    border: '1px solid var(--color-surface-200)',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    color: 'var(--color-surface-900)',
-                  }}
+                  contentStyle={TOOLTIP_CONTENT_STYLE}
+                  labelStyle={TOOLTIP_LABEL_STYLE}
+                  itemStyle={TOOLTIP_ITEM_STYLE}
                 />
-                <Bar dataKey="total_amount" fill="var(--color-surface-200)" radius={[4, 4, 0, 0]} name="total" />
+                <Bar dataKey="total_amount" fill="var(--color-surface-400)" radius={[4, 4, 0, 0]} name="total" />
                 <Bar dataKey="weighted" fill="var(--color-primary-500)" radius={[4, 4, 0, 0]} name="weighted" />
               </BarChart>
             </ResponsiveContainer>

@@ -3,6 +3,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import Skeleton from '@/components/dashboard/Skeleton'
+import { TOOLTIP_CONTENT_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_ITEM_STYLE, BAR_CURSOR } from './chartUtils'
 
 function fmtRevenue(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M€`
@@ -68,13 +69,10 @@ export default function RevenueChart({
             />
             <Tooltip
               formatter={(v: unknown) => [fmtRevenue(Number(v)), t('stats.kpi.revenue')]}
-              contentStyle={{
-                background: 'var(--color-surface-0)',
-                border: '1px solid var(--color-surface-200)',
-                borderRadius: '8px',
-                fontSize: '12px',
-                color: 'var(--color-surface-900)',
-              }}
+              contentStyle={TOOLTIP_CONTENT_STYLE}
+              labelStyle={TOOLTIP_LABEL_STYLE}
+              itemStyle={TOOLTIP_ITEM_STYLE}
+              cursor={BAR_CURSOR}
             />
             <Line
               type="monotone"

@@ -1,5 +1,6 @@
-import { createBrowserRouter, Navigate, useLocation } from 'react-router-dom'
+import { createBrowserRouter, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
+import pb from '@/lib/pocketbase'
 import AppLayout from '@/components/layout/AppLayout'
 import { lazy, Suspense } from 'react'
 
@@ -21,7 +22,9 @@ const SettingsPage = lazy(() => import('@/pages/SettingsPage'))
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
   const location = useLocation()
-  if (!isAuthenticated) {
+  // Also check pb.authStore.isValid directly to catch locally-expired tokens
+  // even if the Zustand store hasn't been updated yet (e.g. token expired mid-session)
+  if (!isAuthenticated || !pb.authStore.isValid) {
     return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />
   }
   return <>{children}</>
@@ -74,7 +77,13 @@ export const router = createBrowserRouter([
       { path: '/companies', element: <S><CompaniesPage /></S> },
       { path: '/leads', element: <S><LeadsPage /></S> },
       { path: '/pipeline', element: <S><PipelinePage /></S> },
-      { path: '/tasks', element: <S><TasksPage /></S> },
+      {
+        path: '/tasks',
+        children: [
+          { index: true, element: <Navigate to="list" replace /> },
+          { path: ':tab', element: <S><TasksPage /></S> },
+        ],
+      },
       {
         path: '/invoices',
         element: (
@@ -85,19 +94,19 @@ export const router = createBrowserRouter([
       },
       {
         path: '/email',
-        element: (
-          <RequireRole roles={['admin', 'commercial']}>
-            <S><EmailPage /></S>
-          </RequireRole>
-        ),
+        element: <RequireRole roles={['admin', 'commercial']}><Outlet /></RequireRole>,
+        children: [
+          { index: true, element: <Navigate to="templates" replace /> },
+          { path: ':tab', element: <S><EmailPage /></S> },
+        ],
       },
       {
         path: '/stats',
-        element: (
-          <RequireRole roles={['admin', 'commercial']}>
-            <S><StatsPage /></S>
-          </RequireRole>
-        ),
+        element: <RequireRole roles={['admin', 'commercial']}><Outlet /></RequireRole>,
+        children: [
+          { index: true, element: <Navigate to="sales" replace /> },
+          { path: ':tab', element: <S><StatsPage /></S> },
+        ],
       },
       { path: '/settings', element: <S><SettingsPage /></S> },
     ],

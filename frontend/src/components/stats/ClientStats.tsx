@@ -5,6 +5,7 @@ import type { Period } from './PeriodFilter'
 import KpiCard from '@/components/dashboard/KpiCard'
 import Skeleton from '@/components/dashboard/Skeleton'
 import { Users, UserCheck, UserPlus, ShoppingBag } from 'lucide-react'
+import { TOOLTIP_CONTENT_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_ITEM_STYLE } from './chartUtils'
 
 interface ClientData {
   total_clients: number
@@ -94,13 +95,9 @@ export default function ClientStats({ period }: Props) {
                       ))}
                     </Pie>
                     <Tooltip
-                      contentStyle={{
-                        background: 'var(--color-surface-0)',
-                        border: '1px solid var(--color-surface-200)',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        color: 'var(--color-surface-900)',
-                      }}
+                      contentStyle={TOOLTIP_CONTENT_STYLE}
+                      labelStyle={TOOLTIP_LABEL_STYLE}
+                      itemStyle={TOOLTIP_ITEM_STYLE}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -145,13 +142,9 @@ export default function ClientStats({ period }: Props) {
                       ))}
                     </Pie>
                     <Tooltip
-                      contentStyle={{
-                        background: 'var(--color-surface-0)',
-                        border: '1px solid var(--color-surface-200)',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        color: 'var(--color-surface-900)',
-                      }}
+                      contentStyle={TOOLTIP_CONTENT_STYLE}
+                      labelStyle={TOOLTIP_LABEL_STYLE}
+                      itemStyle={TOOLTIP_ITEM_STYLE}
                     />
                   </PieChart>
                 </ResponsiveContainer>

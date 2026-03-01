@@ -6,6 +6,7 @@ import KpiCard from '@/components/dashboard/KpiCard'
 import RevenueChart from './RevenueChart'
 import Skeleton from '@/components/dashboard/Skeleton'
 import { Target, Mail, MousePointerClick, Megaphone, TrendingUp, Euro } from 'lucide-react'
+import { TOOLTIP_CONTENT_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_ITEM_STYLE } from './chartUtils'
 
 interface EmailStats {
   total: number
@@ -126,13 +127,9 @@ export default function MarketingStats({ period }: Props) {
                 </Pie>
                 <Tooltip
                   formatter={(v, _n, props) => [v, t(`leadSource.${props.payload.source}`)]}
-                  contentStyle={{
-                    background: 'var(--color-surface-0)',
-                    border: '1px solid var(--color-surface-200)',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    color: 'var(--color-surface-900)',
-                  }}
+                  contentStyle={TOOLTIP_CONTENT_STYLE}
+                  labelStyle={TOOLTIP_LABEL_STYLE}
+                  itemStyle={TOOLTIP_ITEM_STYLE}
                 />
               </PieChart>
             </ResponsiveContainer>

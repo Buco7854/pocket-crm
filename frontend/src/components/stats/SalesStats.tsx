@@ -9,6 +9,7 @@ import ConversionFunnel from './ConversionFunnel'
 import Skeleton from '@/components/dashboard/Skeleton'
 import KpiCard from '@/components/dashboard/KpiCard'
 import { TrendingUp, Clock, Award } from 'lucide-react'
+import { TOOLTIP_CONTENT_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_ITEM_STYLE, BAR_CURSOR } from './chartUtils'
 
 interface SalesData {
   revenue_by_month: { month: string; revenue: number }[]
@@ -96,15 +97,11 @@ export default function SalesStats({ period }: Props) {
                   width={80}
                 />
                 <Tooltip
-                  cursor={{ fill: 'var(--color-surface-100)', opacity: 0.6 }}
+                  cursor={BAR_CURSOR}
                   formatter={(v: unknown) => [fmtRevenue(Number(v)), t('stats.kpi.revenue')]}
-                  contentStyle={{
-                    background: 'var(--color-surface-0)',
-                    border: '1px solid var(--color-surface-200)',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    color: 'var(--color-surface-900)',
-                  }}
+                  contentStyle={TOOLTIP_CONTENT_STYLE}
+                  labelStyle={TOOLTIP_LABEL_STYLE}
+                  itemStyle={TOOLTIP_ITEM_STYLE}
                 />
                 <Bar dataKey="revenue" fill="var(--color-primary-500)" radius={[0, 4, 4, 0]} />
               </BarChart>

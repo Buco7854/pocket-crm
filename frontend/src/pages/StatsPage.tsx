@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { TrendingUp, Users, Medal, Receipt, Megaphone, RefreshCw } from 'lucide-react'
 import Tabs from '@/components/ui/Tabs'
@@ -13,7 +14,9 @@ type StatsTab = 'sales' | 'clients' | 'commercials' | 'financial' | 'marketing'
 
 export default function StatsPage() {
   const { t } = useTranslation()
-  const [tab, setTab] = useState<StatsTab>('sales')
+  const { tab = 'sales' } = useParams<{ tab: string }>()
+  const navigate = useNavigate()
+  const activeTab = tab as StatsTab
   const [period, setPeriod] = useState<Period>('month')
   // key trick: increment to force re-mount children and re-fetch
   const [refreshKey, setRefreshKey] = useState(0)
@@ -47,15 +50,15 @@ export default function StatsPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs tabs={tabs} active={tab} onChange={setTab} />
+      <Tabs tabs={tabs} active={activeTab} onChange={(key) => navigate(`/stats/${key}`)} />
 
       {/* Content */}
-      <div key={`${tab}-${period}-${refreshKey}`}>
-        {tab === 'sales'       && <SalesStats period={period} />}
-        {tab === 'clients'     && <ClientStats period={period} />}
-        {tab === 'commercials' && <CommercialLeaderboard period={period} />}
-        {tab === 'financial'   && <FinancialStats period={period} />}
-        {tab === 'marketing'   && <MarketingStats period={period} />}
+      <div key={`${activeTab}-${period}-${refreshKey}`}>
+        {activeTab === 'sales'       && <SalesStats period={period} />}
+        {activeTab === 'clients'     && <ClientStats period={period} />}
+        {activeTab === 'commercials' && <CommercialLeaderboard period={period} />}
+        {activeTab === 'financial'   && <FinancialStats period={period} />}
+        {activeTab === 'marketing'   && <MarketingStats period={period} />}
       </div>
     </div>
   )

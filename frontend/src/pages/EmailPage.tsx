@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { FileText, Send, Clock, BarChart2 } from 'lucide-react'
 import { useEmailLogs } from '@/hooks/useEmailLogs'
@@ -26,7 +27,9 @@ const statusVariant: Record<EmailLogStatus, string> = {
 
 export default function EmailPage() {
   const { t, i18n } = useTranslation()
-  const [activeTab, setActiveTab] = useState<Tab>('templates')
+  const { tab = 'templates' } = useParams<{ tab: string }>()
+  const navigate = useNavigate()
+  const activeTab = tab as Tab
   const { items: logs, loading, totalItems, totalPages, fetchLogs } = useEmailLogs()
   const [historyLoaded, setHistoryLoaded] = useState(false)
   const [historyPage, setHistoryPage] = useState(1)
@@ -41,13 +44,13 @@ export default function EmailPage() {
       .catch(() => setSmtpConfigured(false))
   }, [])
 
-  function handleTabChange(tab: Tab) {
-    setActiveTab(tab)
-    if (tab === 'history' && !historyLoaded) {
+  // Load history when arriving on the history tab (tab switch or direct URL)
+  useEffect(() => {
+    if (activeTab === 'history' && !historyLoaded) {
       fetchLogs({ page: 1 })
       setHistoryLoaded(true)
     }
-  }
+  }, [activeTab]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleHistoryPageChange(p: number) {
     setHistoryPage(p)
@@ -110,7 +113,7 @@ export default function EmailPage() {
         <Alert type="warning">{t('email.smtpNotConfigured')}</Alert>
       )}
 
-      <Tabs tabs={tabs} active={activeTab} onChange={handleTabChange} />
+      <Tabs tabs={tabs} active={activeTab} onChange={(key) => navigate(`/email/${key}`)} />
 
       {activeTab === 'templates' && <EmailTemplateEditor />}
       {activeTab === 'campaigns' && <EmailCampaignList />}
