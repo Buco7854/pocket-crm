@@ -105,6 +105,7 @@
     "perPage": "par page",
     "showing": "Affichage",
     "to": "à",
+    "total": "Total",
     "collapse": "Réduire",
     "confirmDelete": "Confirmer la suppression",
     "confirmDeleteMessage": "Êtes-vous sûr de vouloir supprimer « {{name}} » ? Cette action est irréversible.",
@@ -271,6 +272,7 @@
     "bodyPlaceholder": "<p>Bonjour {{first_name}},</p><p>...</p>",
     "smtpNotConfigured": "SMTP non configuré. Configurez-le dans l'admin PocketBase → Paramètres → Mail pour activer l'envoi d'emails.",
     "campaignName": "Nom de la campagne",
+    "budget": "Budget (€)",
     "saveDraft": "Enregistrer en brouillon",
     "draftSaved": "Campagne enregistrée en brouillon.",
     "sendNow": "Envoyer maintenant",
@@ -400,7 +402,15 @@
     "marketing": {
       "leadsGenerated": "Leads générés",
       "sources": "Sources de leads",
-      "emailStats": "Performances email"
+      "emailStats": "Performances email",
+      "costPerLead": "Coût par lead",
+      "emailRoi": "Leads pour 100 emails",
+      "noBudget": "Aucune campagne avec budget"
+    },
+    "dashboard": {
+      "revenueGoal": "Objectif CA",
+      "revenueGoalHint": "vs période précédente",
+      "goalAchieved": "Objectif atteint"
     }
   }
 }

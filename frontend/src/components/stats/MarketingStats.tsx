@@ -5,7 +5,7 @@ import type { Period } from './PeriodFilter'
 import KpiCard from '@/components/dashboard/KpiCard'
 import RevenueChart from './RevenueChart'
 import Skeleton from '@/components/dashboard/Skeleton'
-import { Target, Mail, MousePointerClick, Megaphone } from 'lucide-react'
+import { Target, Mail, MousePointerClick, Megaphone, TrendingUp, Euro } from 'lucide-react'
 
 interface EmailStats {
   total: number
@@ -19,6 +19,9 @@ interface MarketingData {
   by_source: { source: string; count: number }[]
   total_leads: number
   email_stats: EmailStats
+  cost_per_lead: string
+  email_roi: string
+  has_budget: boolean
 }
 
 const COLORS = [
@@ -73,6 +76,24 @@ export default function MarketingStats({ period }: Props) {
         />
       </div>
 
+      {/* Cost per lead + Email ROI row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <KpiCard
+          label={t('stats.marketing.costPerLead')}
+          value={data ? (data.has_budget && data.cost_per_lead ? `${data.cost_per_lead}€` : t('stats.marketing.noBudget')) : '—'}
+          icon={<Euro />}
+          color="orange"
+          loading={loading}
+        />
+        <KpiCard
+          label={t('stats.marketing.emailRoi')}
+          value={data ? `${data.email_roi}` : '—'}
+          icon={<TrendingUp />}
+          color="green"
+          loading={loading}
+        />
+      </div>
+
       {/* Leads over time */}
       <RevenueChart
         data={leadsChartData}
@@ -110,6 +131,7 @@ export default function MarketingStats({ period }: Props) {
                     border: '1px solid var(--color-surface-200)',
                     borderRadius: '8px',
                     fontSize: '12px',
+                    color: 'var(--color-surface-900)',
                   }}
                 />
               </PieChart>

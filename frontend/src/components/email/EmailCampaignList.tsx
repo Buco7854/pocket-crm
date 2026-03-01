@@ -51,6 +51,7 @@ export default function EmailCampaignList() {
   const [name, setName] = useState('')
   const [selectedTemplate, setSelectedTemplate] = useState('')
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
+  const [budget, setBudget] = useState('')
   const [contactOptions, setContactOptions] = useState<{ value: string; label: string }[]>([])
   const [loadingContacts, setLoadingContacts] = useState(false)
 
@@ -97,6 +98,7 @@ export default function EmailCampaignList() {
     setName('')
     setSelectedTemplate('')
     setSelectedContacts([])
+    setBudget('')
     setError(null)
     loadContacts()
     setModalOpen(true)
@@ -107,6 +109,7 @@ export default function EmailCampaignList() {
     setName(campaign.name)
     setSelectedTemplate(campaign.template || '')
     setSelectedContacts(campaign.contact_ids || [])
+    setBudget(campaign.budget ? String(campaign.budget) : '')
     setError(null)
     loadContacts()
     setSelected(null)
@@ -124,12 +127,14 @@ export default function EmailCampaignList() {
     setSaving(true)
     setError(null)
     try {
+      const budgetValue = budget.trim() !== '' ? Number(budget) : null
       if (editingCampaign) {
         await pb.collection('campaigns').update(editingCampaign.id, {
           name,
           template: selectedTemplate,
           contact_ids: selectedContacts,
           total: selectedContacts.length,
+          budget: budgetValue,
         })
       } else {
         await pb.collection('campaigns').create({
@@ -141,6 +146,7 @@ export default function EmailCampaignList() {
           sent: 0,
           failed: 0,
           created_by: user?.id,
+          budget: budgetValue,
         })
       }
       setModalOpen(false)
@@ -295,6 +301,15 @@ export default function EmailCampaignList() {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
+          />
+
+          <Input
+            label={t('email.budget')}
+            type="number"
+            min={0}
+            value={budget}
+            onChange={(e) => setBudget(e.target.value)}
+            placeholder="0"
           />
 
           <Select

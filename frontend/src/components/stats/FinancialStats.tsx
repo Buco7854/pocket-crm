@@ -86,33 +86,45 @@ export default function FinancialStats({ period }: Props) {
           {loading ? (
             <Skeleton className="h-52 w-full" />
           ) : data && data.by_status.length > 0 ? (
-            <ResponsiveContainer width="100%" height={210}>
-              <PieChart>
-                <Pie
-                  data={data.by_status}
-                  dataKey="count"
-                  nameKey="status"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  label={(props: { name?: string; percent?: number }) => `${t(`invoiceStatus.${props.name ?? ''}`)} ${((props.percent ?? 0) * 100).toFixed(0)}%`}
-                  labelLine={false}
-                >
-                  {data.by_status.map((r, i) => (
-                    <Cell key={i} fill={STATUS_COLORS[r.status] ?? '#94a3b8'} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(v: unknown, _name: unknown, props: { payload?: { status?: string } }) => [String(v), t(`invoiceStatus.${props.payload?.status ?? ''}`)]}
-                  contentStyle={{
-                    background: 'var(--color-surface-0)',
-                    border: '1px solid var(--color-surface-200)',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="w-full sm:w-auto shrink-0">
+                <ResponsiveContainer width="100%" height={180} minWidth={180}>
+                  <PieChart>
+                    <Pie
+                      data={data.by_status}
+                      dataKey="count"
+                      nameKey="status"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={75}
+                    >
+                      {data.by_status.map((r, i) => (
+                        <Cell key={i} fill={STATUS_COLORS[r.status] ?? '#94a3b8'} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(v: unknown, _name: unknown, props: { payload?: { status?: string } }) => [String(v), t(`invoiceStatus.${props.payload?.status ?? ''}`)]}
+                      contentStyle={{
+                        background: 'var(--color-surface-0)',
+                        border: '1px solid var(--color-surface-200)',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        color: 'var(--color-surface-900)',
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <ul className="space-y-2 w-full">
+                {data.by_status.map((r) => (
+                  <li key={r.status} className="flex items-center gap-2.5">
+                    <span className="h-3 w-3 rounded-sm shrink-0" style={{ background: STATUS_COLORS[r.status] ?? '#94a3b8' }} />
+                    <span className="text-sm text-surface-700 flex-1">{t(`invoiceStatus.${r.status}`)}</span>
+                    <span className="text-sm font-semibold text-surface-900 tabular-nums">{r.count}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : (
             <div className="h-52 flex items-center justify-center">
               <p className="text-sm text-surface-400">{t('empty.invoices')}</p>
@@ -144,6 +156,7 @@ export default function FinancialStats({ period }: Props) {
                   tickFormatter={fmtMoney}
                 />
                 <Tooltip
+                  cursor={{ fill: 'var(--color-surface-100)', opacity: 0.6 }}
                   formatter={(v: unknown, name: unknown) => [fmtMoney(Number(v)), name === 'weighted' ? t('stats.financial.forecast') : t('common.total')]}
                   labelFormatter={(l: unknown) => t(`status.${String(l)}`)}
                   contentStyle={{
@@ -151,6 +164,7 @@ export default function FinancialStats({ period }: Props) {
                     border: '1px solid var(--color-surface-200)',
                     borderRadius: '8px',
                     fontSize: '12px',
+                    color: 'var(--color-surface-900)',
                   }}
                 />
                 <Bar dataKey="total_amount" fill="var(--color-surface-200)" radius={[4, 4, 0, 0]} name="total" />

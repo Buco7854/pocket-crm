@@ -30,6 +30,7 @@ export interface DashboardStats {
   pipeline_by_stage: PipelineStage[]
   recent_activities: RecentActivity[]
   revenue_trend: RevenueTrendPoint[]
+  revenue_goal_pct: string
 }
 
 export function useDashboard(period: Period) {

@@ -198,6 +198,7 @@ export interface Campaign extends BaseModel {
   failed: number
   campaign_key: string
   created_by: string
+  budget?: number
 }
 
 /** Activity types */
