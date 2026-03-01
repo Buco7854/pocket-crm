@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/mail"
+	"time"
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/mailer"
@@ -18,6 +19,10 @@ import (
 func RegisterLeadHooks(app core.App) {
 	// ── After creation: record creation activity ──────────────────────────────
 	app.OnRecordCreate("leads").BindFunc(func(e *core.RecordEvent) error {
+		// Auto-set closed_at when created directly as won or lost
+		if status := e.Record.GetString("status"); (status == "gagne" || status == "perdu") && e.Record.GetString("closed_at") == "" {
+			e.Record.Set("closed_at", time.Now().UTC().Format("2006-01-02 15:04:05.000Z"))
+		}
 		if err := e.Next(); err != nil {
 			return err
 		}
@@ -41,6 +46,11 @@ func RegisterLeadHooks(app core.App) {
 		newOwner := e.Record.GetString("owner")
 		oldOwner := oldRecord.GetString("owner")
 		leadTitle := e.Record.GetString("title")
+
+		// Auto-set closed_at when transitioning to won or lost
+		if (newStatus == "gagne" || newStatus == "perdu") && newStatus != oldStatus && e.Record.GetString("closed_at") == "" {
+			e.Record.Set("closed_at", time.Now().UTC().Format("2006-01-02 15:04:05.000Z"))
+		}
 
 		if err := e.Next(); err != nil {
 			return err

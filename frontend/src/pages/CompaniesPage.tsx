@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { useCompanies } from '@/hooks/useCompanies'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useDeleteConfirm } from '@/hooks/useDeleteConfirm'
@@ -40,8 +40,8 @@ export default function CompaniesPage() {
   const canCreate = isAdmin || isCommercial
 
   const load = useCallback(() => {
-    fetchCompanies({ page, search: debouncedSearch, sizeFilter: filterValues.size || undefined })
-  }, [fetchCompanies, page, debouncedSearch, filterValues.size])
+    fetchCompanies({ page, search: debouncedSearch, sizeFilter: filterValues.size || undefined, sort: sortBy, sortDir })
+  }, [fetchCompanies, page, debouncedSearch, filterValues.size, sortBy, sortDir])
 
   useEffect(() => { load() }, [load])
 
@@ -132,16 +132,24 @@ export default function CompaniesPage() {
         onClose={() => setSelected(null)}
         title={selected?.name}
         size="lg"
+        footer={
+          <div className="flex justify-between w-full">
+            <div>
+              {isAdmin && selected && (
+                <Button variant="danger" icon={<Trash2 className="h-4 w-4" strokeWidth={1.75} />} onClick={openDelete}>
+                  {t('common.delete')}
+                </Button>
+              )}
+            </div>
+            {selected && (isAdmin || selected.owner === user?.id) && (
+              <Button icon={<Pencil className="h-4 w-4" strokeWidth={1.75} />} onClick={openEdit}>
+                {t('common.edit')}
+              </Button>
+            )}
+          </div>
+        }
       >
-        {selected && (
-          <CompanyDetail
-            company={selected}
-            onEdit={openEdit}
-            onDelete={openDelete}
-            canEdit={isAdmin || selected.owner === user?.id}
-            canDelete={isAdmin}
-          />
-        )}
+        {selected && <CompanyDetail company={selected} />}
       </Modal>
 
       <ConfirmDialog

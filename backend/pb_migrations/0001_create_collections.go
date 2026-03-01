@@ -422,18 +422,23 @@ func init() {
 		// ==========================================
 		campaigns := findOrCreateBase(app, "campaigns")
 		campaigns.Fields.Add(&core.TextField{Name: "name", Required: true, Max: 300})
-		campaigns.Fields.Add(&core.RelationField{Name: "template", CollectionId: emailTemplates.Id, MaxSelect: 1, Required: true})
+		campaigns.Fields.Add(&core.SelectField{
+			Name:      "type",
+			Required:  true,
+			Values:    []string{"email", "ads", "social", "event", "seo", "autre"},
+			MaxSelect: 1,
+		})
+		campaigns.Fields.Add(&core.RelationField{Name: "template", CollectionId: emailTemplates.Id, MaxSelect: 1, Required: false})
 		campaigns.Fields.Add(&core.JSONField{Name: "contact_ids", MaxSize: 500000})
 		campaigns.Fields.Add(&core.SelectField{
 			Name:      "status",
 			Required:  true,
-			Values:    []string{"brouillon", "en_cours", "envoye"},
+			Values:    []string{"brouillon", "en_cours", "envoye", "termine"},
 			MaxSelect: 1,
 		})
 		campaigns.Fields.Add(&core.NumberField{Name: "total", Min: floatPtr(0)})
 		campaigns.Fields.Add(&core.NumberField{Name: "sent", Min: floatPtr(0)})
 		campaigns.Fields.Add(&core.NumberField{Name: "failed", Min: floatPtr(0)})
-		campaigns.Fields.Add(&core.NumberField{Name: "budget", Min: floatPtr(0)})
 		campaigns.Fields.Add(&core.TextField{Name: "campaign_key", Max: 50})
 		campaigns.Fields.Add(&core.RelationField{Name: "created_by", CollectionId: users.Id, MaxSelect: 1, Required: true})
 		campaigns.Fields.Add(&core.AutodateField{Name: "created", OnCreate: true})
@@ -446,6 +451,12 @@ func init() {
 		campaigns.DeleteRule = adminOnly
 
 		if err := app.Save(campaigns); err != nil {
+			return err
+		}
+
+		// Second-pass: add campaign_id to leads (campaigns must exist first)
+		leads.Fields.Add(&core.RelationField{Name: "campaign_id", CollectionId: campaigns.Id, MaxSelect: 1})
+		if err := app.Save(leads); err != nil {
 			return err
 		}
 
@@ -471,10 +482,39 @@ func init() {
 			return err
 		}
 
+		// ==========================================
+		// MARKETING_EXPENSES
+		// ==========================================
+		marketingExpenses := findOrCreateBase(app, "marketing_expenses")
+		marketingExpenses.Fields.Add(&core.DateField{Name: "date", Required: true})
+		marketingExpenses.Fields.Add(&core.NumberField{Name: "amount", Required: true, Min: floatPtr(0)})
+		marketingExpenses.Fields.Add(&core.SelectField{
+			Name:      "category",
+			Required:  true,
+			Values:    []string{"email", "site_web", "salon", "telephone", "recommandation", "autre"},
+			MaxSelect: 1,
+		})
+		marketingExpenses.Fields.Add(&core.TextField{Name: "description", Max: 500})
+		marketingExpenses.Fields.Add(&core.RelationField{Name: "campaign_id", CollectionId: campaigns.Id, MaxSelect: 1})
+		marketingExpenses.Fields.Add(&core.RelationField{Name: "created_by", CollectionId: users.Id, Required: true, MaxSelect: 1})
+		marketingExpenses.Fields.Add(&core.AutodateField{Name: "created", OnCreate: true})
+		marketingExpenses.Fields.Add(&core.AutodateField{Name: "updated", OnCreate: true, OnUpdate: true})
+
+		marketingExpenses.ListRule = auth
+		marketingExpenses.ViewRule = auth
+		marketingExpenses.CreateRule = adminOrCommercial
+		marketingExpenses.UpdateRule = adminOrCommercial
+		marketingExpenses.DeleteRule = adminOnly
+
+		if err := app.Save(marketingExpenses); err != nil {
+			return err
+		}
+
 		return nil
 	}, func(app core.App) error {
 		// Down: delete collections in reverse dependency order
 		names := []string{
+			"marketing_expenses",
 			"campaign_runs",
 			"campaigns",
 			"activities",

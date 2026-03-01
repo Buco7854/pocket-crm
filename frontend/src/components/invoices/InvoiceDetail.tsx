@@ -1,49 +1,30 @@
 import { useTranslation } from 'react-i18next'
-import { Pencil, Trash2, CheckCircle } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
-import Button from '@/components/ui/Button'
 import type { Invoice, InvoiceStatus } from '@/types/models'
 
 const allStatuses: InvoiceStatus[] = ['brouillon', 'emise', 'payee', 'en_retard', 'annulee']
 
 interface Props {
   invoice: Invoice & { expand?: { contact?: { first_name: string; last_name: string }; company?: { name: string }; owner?: { name: string } } }
-  onEdit: () => void
-  onDelete: () => void
-  onMarkPaid: () => void
   onStatusChange: (status: InvoiceStatus) => void
   canEdit: boolean
-  canDelete: boolean
 }
 
-export default function InvoiceDetail({ invoice, onEdit, onDelete, onMarkPaid, onStatusChange, canEdit, canDelete }: Props) {
+export default function InvoiceDetail({ invoice, onStatusChange, canEdit }: Props) {
   const { t, i18n } = useTranslation()
   const fmt = (d: string) => d ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(d)) : '—'
   const fmtCurrency = (val: number) =>
     val != null ? new Intl.NumberFormat(i18n.language, { style: 'currency', currency: 'EUR' }).format(val) : '—'
 
-  const isPaid = invoice.status === 'payee'
-
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-xs text-surface-400 font-medium uppercase tracking-wider mb-1">{t('invoices.invoice')}</p>
-          <h2 className="text-xl font-bold text-surface-900">{invoice.number}</h2>
-          <div className="flex flex-wrap items-center gap-2 mt-1">
-            <span className="text-2xl font-bold text-primary-600">{fmtCurrency(invoice.total)}</span>
-            <Badge variant={invoice.status as InvoiceStatus}>{t(`invoiceStatus.${invoice.status}`)}</Badge>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap shrink-0">
-          {canEdit && !isPaid && (
-            <Button variant="primary" size="sm" icon={<CheckCircle className="h-3.5 w-3.5" strokeWidth={2} />} onClick={onMarkPaid}>
-              {t('invoices.markPaid', { defaultValue: 'Marquer payée' })}
-            </Button>
-          )}
-          {canEdit && <Button variant="secondary" size="sm" icon={<Pencil className="h-3.5 w-3.5" />} onClick={onEdit}>{t('common.edit')}</Button>}
-          {canDelete && <Button variant="danger" size="sm" icon={<Trash2 className="h-3.5 w-3.5" />} onClick={onDelete}>{t('common.delete')}</Button>}
+      <div>
+        <p className="text-xs text-surface-400 font-medium uppercase tracking-wider mb-1">{t('invoices.invoice')}</p>
+        <h2 className="text-xl font-bold text-surface-900">{invoice.number}</h2>
+        <div className="flex flex-wrap items-center gap-2 mt-1">
+          <span className="text-2xl font-bold text-primary-600">{fmtCurrency(invoice.total)}</span>
+          <Badge variant={invoice.status as InvoiceStatus}>{t(`invoiceStatus.${invoice.status}`)}</Badge>
         </div>
       </div>
 

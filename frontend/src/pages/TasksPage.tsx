@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Plus, List, CalendarDays, Bell } from 'lucide-react'
+import { Plus, List, CalendarDays, Bell, Pencil, Trash2, CheckCircle2, RotateCcw } from 'lucide-react'
 import Tabs, { type TabItem } from '@/components/ui/Tabs'
 import { useTasks } from '@/hooks/useTasks'
 import { useCollection } from '@/hooks/useCollection'
@@ -70,8 +70,8 @@ export default function TasksPage() {
   }, [])
 
   const load = useCallback(() => {
-    fetchTasks({ page, search: debouncedSearch, statusFilter: filterValues.status || undefined, priorityFilter: filterValues.priority || undefined, typeFilter: filterValues.type || undefined })
-  }, [fetchTasks, page, debouncedSearch, filterValues.status, filterValues.priority, filterValues.type])
+    fetchTasks({ page, search: debouncedSearch, statusFilter: filterValues.status || undefined, priorityFilter: filterValues.priority || undefined, typeFilter: filterValues.type || undefined, sort: sortBy, sortDir })
+  }, [fetchTasks, page, debouncedSearch, filterValues.status, filterValues.priority, filterValues.type, sortBy, sortDir])
 
   useEffect(() => { load() }, [load])
 
@@ -198,17 +198,40 @@ export default function TasksPage() {
         />
       </Modal>
 
-      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.title} size="lg">
-        {selected && (
-          <TaskDetail
-            task={selected}
-            onEdit={openEdit}
-            onDelete={openDelete}
-            onToggleComplete={handleToggleComplete}
-            canEdit={canEdit(selected)}
-            canDelete={isAdmin}
-          />
-        )}
+      <Modal
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title={selected?.title}
+        size="lg"
+        footer={
+          <div className="flex justify-between w-full">
+            <div>
+              {isAdmin && selected && (
+                <Button variant="danger" icon={<Trash2 className="h-4 w-4" strokeWidth={1.75} />} onClick={openDelete}>
+                  {t('common.delete')}
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {selected && canEdit(selected) && (
+                <Button
+                  variant={selected.status === 'terminee' ? 'secondary' : 'primary'}
+                  icon={selected.status === 'terminee' ? <RotateCcw className="h-4 w-4" strokeWidth={1.75} /> : <CheckCircle2 className="h-4 w-4" strokeWidth={1.75} />}
+                  onClick={handleToggleComplete}
+                >
+                  {selected.status === 'terminee' ? t('common.reopen') : t('common.markComplete')}
+                </Button>
+              )}
+              {selected && canEdit(selected) && (
+                <Button variant="secondary" icon={<Pencil className="h-4 w-4" strokeWidth={1.75} />} onClick={openEdit}>
+                  {t('common.edit')}
+                </Button>
+              )}
+            </div>
+          </div>
+        }
+      >
+        {selected && <TaskDetail task={selected} />}
       </Modal>
 
       <ConfirmDialog

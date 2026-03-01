@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import Input from '@/components/ui/Input'
 import Select, { type SelectOption } from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import { useAuthStore } from '@/store/authStore'
+import pb from '@/lib/pocketbase'
 import type { Lead, LeadStatus, LeadSource, Priority } from '@/types/models'
 
 const statuses: LeadStatus[] = ['nouveau', 'contacte', 'qualifie', 'proposition', 'negociation', 'gagne', 'perdu']
@@ -23,6 +24,7 @@ interface Props {
 export default function LeadForm({ lead, contacts, companies, loading, onSubmit, onCancel, defaultStatus }: Props) {
   const { t } = useTranslation()
   const { user } = useAuthStore()
+  const [campaignOptions, setCampaignOptions] = useState<SelectOption[]>([])
   const [form, setForm] = useState({
     title: lead?.title || '',
     value: lead?.value || 0,
@@ -33,8 +35,22 @@ export default function LeadForm({ lead, contacts, companies, loading, onSubmit,
     company: lead?.company || '',
     expected_close: lead?.expected_close ? lead.expected_close.slice(0, 10) : '',
     notes: lead?.notes || '',
+    campaign_id: lead?.campaign_id || '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    pb.collection('campaigns').getList(1, 100, {
+      filter: 'status != "brouillon"',
+      sort: '-created',
+      fields: 'id,name,type',
+    }).then((res) => {
+      setCampaignOptions([
+        { value: '', label: '—' },
+        ...res.items.map((c) => ({ value: c.id, label: c['name'] as string })),
+      ])
+    }).catch(() => {})
+  }, [])
 
   function set(key: string, value: string | number) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -45,6 +61,7 @@ export default function LeadForm({ lead, contacts, companies, loading, onSubmit,
     e.preventDefault()
     if (!form.title.trim()) { setErrors({ title: t('validation.required') }); return }
     const data: Partial<Lead> = { ...form, value: Number(form.value) || 0 } as Partial<Lead>
+    if (!form.campaign_id) delete (data as any).campaign_id
     if (!lead) (data as any).owner = user?.id
     onSubmit(data)
   }
@@ -62,6 +79,17 @@ export default function LeadForm({ lead, contacts, companies, loading, onSubmit,
         <Select label={t('entities.contact')} options={contacts} value={form.contact} onChange={(v) => set('contact', v)} placeholder={t('entities.contact')} searchable />
         <Select label={t('fields.company')} options={companies} value={form.company} onChange={(v) => set('company', v)} placeholder={t('fields.company')} searchable />
         <Input label={t('fields.expectedClose')} type="date" value={form.expected_close} onChange={(e) => set('expected_close', e.target.value)} />
+        {campaignOptions.length > 1 && (
+          <div className="sm:col-span-2">
+            <Select
+              label={t('fields.campaignOrigin')}
+              options={campaignOptions}
+              value={form.campaign_id}
+              onChange={(v) => set('campaign_id', v)}
+              placeholder="—"
+            />
+          </div>
+        )}
       </div>
       <div>
         <label className="block text-sm font-medium text-surface-700 mb-1.5">{t('fields.notes')}</label>

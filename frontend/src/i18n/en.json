@@ -13,6 +13,8 @@
     "invoices": "Invoices",
     "email": "Email",
     "stats": "Analytics",
+    "marketingExpenses": "Marketing expenses",
+    "campaigns": "Campaigns",
     "settings": "Settings"
   },
   "auth": {
@@ -137,7 +139,8 @@
     "subject": "Subject",
     "body": "Body",
     "active": "Active",
-    "role": "Role"
+    "role": "Role",
+    "campaignOrigin": "Origin campaign"
   },
   "status": {
     "nouveau": "New",
@@ -272,7 +275,6 @@
     "bodyPlaceholder": "<p>Hello {{first_name}},</p><p>...</p>",
     "smtpNotConfigured": "SMTP is not configured. Set it up in PocketBase admin → Settings → Mail to enable email sending.",
     "campaignName": "Campaign name",
-    "budget": "Budget (€)",
     "saveDraft": "Save as Draft",
     "draftSaved": "Campaign saved as draft.",
     "sendNow": "Send Now",
@@ -288,8 +290,22 @@
   },
   "campaignStatus": {
     "brouillon": "Draft",
-    "en_cours": "Sending",
-    "envoye": "Sent"
+    "en_cours": "Active",
+    "envoye": "Sent",
+    "termine": "Ended"
+  },
+  "campaignType": {
+    "email": "Email",
+    "ads": "Advertising",
+    "social": "Social media",
+    "event": "Event",
+    "seo": "SEO",
+    "autre": "Other"
+  },
+  "campaign": {
+    "type": "Campaign type",
+    "add": "Add campaign",
+    "edit": "Edit campaign"
   },
   "activityType": {
     "creation": "Creation",
@@ -404,13 +420,48 @@
       "sources": "Lead sources",
       "emailStats": "Email performance",
       "costPerLead": "Cost per lead",
-      "emailRoi": "Leads per 100 emails",
-      "noBudget": "No campaign with budget"
+      "noBudget": "No expenses recorded",
+      "roiGlobal": "Global marketing ROI",
+      "roasGlobal": "Global ROAS",
+      "totalExpenses": "Marketing expenses",
+      "noExpenses": "No expenses recorded",
+      "roiByChannel": "ROI by channel",
+      "channel": "Channel",
+      "cost": "Cost",
+      "revenue": "Revenue generated",
+      "leads": "Leads",
+      "roi": "ROI",
+      "roas": "ROAS",
+      "cpa": "Cost/Deal",
+      "byCampaign": "Campaign performance",
+      "dealsWon": "Deals won",
+      "noCampaigns": "No active campaigns for the period"
     },
     "dashboard": {
       "revenueGoal": "Revenue goal",
       "revenueGoalHint": "vs previous period",
       "goalAchieved": "Goal achieved"
     }
+  },
+  "marketingExpenses": {
+    "title": "Marketing expenses",
+    "description": "Track your acquisition costs by channel to calculate real ROI",
+    "addExpense": "Add expense",
+    "editExpense": "Edit expense",
+    "manage": "Manage expenses",
+    "date": "Date",
+    "amount": "Amount (€)",
+    "category": "Channel / Category",
+    "description": "Description",
+    "descriptionPlaceholder": "e.g. April email campaign, Trade show Paris…",
+    "campaign": "Associated campaign",
+    "tabExpenses": "Expenses",
+    "tabCampaigns": "Campaigns",
+    "emptyCampaigns": "No marketing campaigns recorded",
+    "empty": "No marketing expenses recorded"
+  },
+  "campaigns": {
+    "description": "Manage all your marketing campaigns in one place.",
+    "otherTypes": "Other campaigns"
   }
 }

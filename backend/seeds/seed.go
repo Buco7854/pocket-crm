@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 )
 
 // collectionsToWipe lists all seeded collections in deletion-safe order
 // (most dependent first to avoid FK conflicts).
 var collectionsToWipe = []string{
+	"marketing_expenses",
 	"campaign_runs", "campaigns", "email_logs", "email_templates",
 	"activities", "tasks", "invoices", "leads", "contacts", "companies", "users",
 }
@@ -221,6 +223,8 @@ func Run(app core.App, force bool) error {
 	mkWon("Bioanalytics BioVert Q1 2026",       115000, alice, c4,  biovert,  "site_web",       "2025-11-30", "2026-01-28")
 	mkWon("Data lakehouse DataFlow 2026",        145000, bob,   c5,  dataflow, "telephone",      "2025-12-15", "2026-02-12")
 	mkWon("Smart city EcoLogis 2026",           128000, alice, c7,  ecologis, "recommandation", "2025-12-28", "2026-02-25")
+	mkWon("Analytics MedTech Connect Q1 2026",  42000,  alice, c14, medtech,  "email",          "2026-01-10", "2026-02-15")
+	mkWon("Module BI SudLogiciel 2026",          35000,  bob,   c11, sudlog,   "site_web",       "2026-01-15", "2026-02-20")
 
 	// Active pipeline leads (11) — various stages for pipeline widget & forecast
 	mkActive := func(title string, value float64, status, source, priority string, owner, contact *core.Record, company *core.Record, created, expectedClose string) *core.Record {
@@ -546,16 +550,18 @@ func Run(app core.App, force bool) error {
 		return fmt.Errorf("find campaigns: %w", err)
 	}
 
-	mkCampaign := func(name, status string, total, sent, failed int, budget float64, creator *core.Record) *core.Record {
+	mkCampaign := func(name, status, campaignType string, total, sent, failed int, creator *core.Record) *core.Record {
 		c := core.NewRecord(campaignsCol)
 		c.Set("name", name)
-		c.Set("template", tplNewsletter.Id)
+		c.Set("type", campaignType)
+		if campaignType == "email" {
+			c.Set("template", tplNewsletter.Id)
+			c.Set("contact_ids", []string{})
+		}
 		c.Set("status", status)
 		c.Set("total", total)
 		c.Set("sent", sent)
 		c.Set("failed", failed)
-		c.Set("budget", budget)
-		c.Set("contact_ids", []string{})
 		c.Set("created_by", creator.Id)
 		if err := app.Save(c); err != nil {
 			log.Printf("[seed] campaign %s: %v", name, err)
@@ -563,10 +569,29 @@ func Run(app core.App, force bool) error {
 		return c
 	}
 
-	camp1 := mkCampaign("Newsletter Automne 2025",   "envoye",   12, 11, 1, 500.0,  alice)
-	camp2 := mkCampaign("Promo Fin d'Année 2025",    "envoye",   10, 10, 0, 1200.0, bob)
-	camp3 := mkCampaign("Newsletter Q1 2026",        "envoye",   15, 14, 1, 750.0,  alice)
-	camp4 := mkCampaign("Webinaire IA Agentic 2026", "en_cours",  8,  8, 0, 2000.0, bob)
+	camp1 := mkCampaign("Newsletter Automne 2025",   "envoye",   "email", 12, 11, 1, alice)
+	camp2 := mkCampaign("Promo Fin d'Année 2025",    "envoye",   "email", 10, 10, 0, bob)
+	camp3 := mkCampaign("Newsletter Q1 2026",        "envoye",   "email", 15, 14, 1, alice)
+	camp4 := mkCampaign("Webinaire IA Agentic 2026", "en_cours", "email",  8,  8, 0, bob)
+	campAds   := mkCampaign("Google Ads T1 2026",       "en_cours", "ads",   0, 0, 0, alice)
+	campEvent := mkCampaign("Cloud Expo Europe 2026",   "termine",  "event", 0, 0, 0, alice)
+
+	// Link some leads to campaigns (email campaigns generated specific leads)
+	linkLeadToCampaign := func(leadTitle, campaignId string) {
+		if _, err := app.DB().NewQuery(`UPDATE leads SET campaign_id = {:cid} WHERE title = {:title}`).
+			Bind(dbx.Params{"cid": campaignId, "title": leadTitle}).Execute(); err != nil {
+			log.Printf("[seed] link lead '%s' to campaign: %v", leadTitle, err)
+		}
+	}
+	linkLeadToCampaign("CRM personnalisé BioVert",          camp1.Id) // Newsletter Automne → won Nov 2025
+	linkLeadToCampaign("DevSecOps Acme 2026",              camp2.Id) // Promo Fin d'Année → won Jan 2026
+	linkLeadToCampaign("Bioanalytics BioVert Q1 2026",     camp2.Id) // Promo Fin d'Année → won Jan 2026
+	linkLeadToCampaign("Smart city EcoLogis 2026",         camp3.Id) // Newsletter Q1 2026 → won Feb 2026
+	linkLeadToCampaign("Analytics MedTech Connect Q1 2026",camp4.Id) // Webinaire IA → won Feb 2026
+	linkLeadToCampaign("Développement AtlanticDev Q2",     camp4.Id) // Webinaire IA → active
+	linkLeadToCampaign("Module BI SudLogiciel 2026",       campAds.Id)   // Google Ads → won Feb 2026
+	linkLeadToCampaign("Intégration ERP Acme 2026",        campAds.Id)   // Google Ads → active
+	linkLeadToCampaign("Sécurité FinTech 2026 v2",         campEvent.Id) // Cloud Expo → active
 
 	emailLogsCol, err := app.FindCollectionByNameOrId("email_logs")
 	if err != nil {
@@ -680,8 +705,61 @@ func Run(app core.App, force bool) error {
 		}
 		mkLog(camp4.Id, "2026-02-20", c, bob, "envoye", openCount, clickCount)
 	}
-	_ = camp1; _ = camp2; _ = camp3; _ = camp4
+	_ = camp1; _ = camp2; _ = camp3; _ = camp4; _ = campAds; _ = campEvent
 
-	fmt.Printf("Seed completed: 3 users, 8 companies, 15 contacts, 45 leads (29 won), 10 tasks, 21 invoices, 20 activities, 4 campaigns, 44 email logs\n")
+	// ── Marketing expenses ─────────────────────────────────────────────────────
+	marketingExpensesCol, err := app.FindCollectionByNameOrId("marketing_expenses")
+	if err != nil {
+		return fmt.Errorf("find marketing_expenses: %w", err)
+	}
+
+	mkExpense := func(date, category string, amount float64, description string, creator *core.Record, campaignId ...string) {
+		e := core.NewRecord(marketingExpensesCol)
+		e.Set("date", date)
+		e.Set("category", category)
+		e.Set("amount", amount)
+		e.Set("description", description)
+		e.Set("created_by", creator.Id)
+		if len(campaignId) > 0 && campaignId[0] != "" {
+			e.Set("campaign_id", campaignId[0])
+		}
+		if err := app.Save(e); err != nil {
+			log.Printf("[seed] expense %s/%s: %v", date, category, err)
+		}
+	}
+
+	// Email campaigns budget — linked to specific email campaigns
+	mkExpense("2025-10-01", "email",          500.0,  "Newsletter Automne 2025",          alice, camp1.Id)
+	mkExpense("2025-11-15", "email",         1200.0,  "Promo Fin d'Année 2025",            bob,   camp2.Id)
+	mkExpense("2026-01-05", "email",          750.0,  "Newsletter Q1 2026",                alice, camp3.Id)
+	mkExpense("2026-02-01", "email",         2000.0,  "Webinaire IA Agentic 2026",         bob,   camp4.Id)
+
+	// Salons et événements — Cloud Expo linked to event campaign
+	mkExpense("2025-03-15", "salon",         3500.0,  "Salon Big Data & AI Paris",         alice)
+	mkExpense("2025-09-20", "salon",         2800.0,  "Forum Tech Lyon",                   bob)
+	mkExpense("2026-01-22", "salon",         4200.0,  "Cloud Expo Europe 2026",            alice, campEvent.Id)
+
+	// Acquisition site web (SEO / Ads) — T1 2026 linked to ads campaign
+	mkExpense("2025-01-01", "site_web",       900.0,  "Google Ads — T1 2025",              alice)
+	mkExpense("2025-04-01", "site_web",       900.0,  "Google Ads — T2 2025",              alice)
+	mkExpense("2025-07-01", "site_web",      1100.0,  "Google Ads + SEO — T3 2025",        bob)
+	mkExpense("2025-10-01", "site_web",      1100.0,  "Google Ads — T4 2025",              bob)
+	mkExpense("2026-01-01", "site_web",      1200.0,  "Google Ads — T1 2026",              alice, campAds.Id)
+
+	// Téléphone (call center / prospection)
+	mkExpense("2025-06-01", "telephone",      600.0,  "Prestation prospection téléphonique juin 2025", bob)
+	mkExpense("2025-12-01", "telephone",      600.0,  "Prestation prospection téléphonique déc. 2025", bob)
+
+	// Recommandation (programme parrainage / commission apporteurs)
+	mkExpense("2025-05-10", "recommandation", 400.0,  "Commission apporteur d'affaires — mai 2025",    alice)
+	mkExpense("2025-11-10", "recommandation", 700.0,  "Commission apporteur d'affaires — nov. 2025",   alice)
+
+	// Dépenses T1 2026 (dans la période "mois" par défaut = fév 2026)
+	// Ces dépenses sont alignées avec les leads gagnés du même canal en fév 2026 → bon ROI visible
+	mkExpense("2026-02-03", "site_web",        1200.0, "Google Ads — Février 2026",                     alice, campAds.Id)
+	mkExpense("2026-02-05", "telephone",        800.0, "Prospection téléphonique — T1 2026",            bob)
+	mkExpense("2026-02-10", "recommandation",  1500.0, "Commission apporteur d'affaires — T1 2026",     alice)
+
+	fmt.Printf("Seed completed: 3 users, 8 companies, 15 contacts, 47 leads (31 won), 10 tasks, 21 invoices, 20 activities, 6 campaigns (4 email + 2 other), 44 email logs, 20 marketing expenses\n")
 	return nil
 }

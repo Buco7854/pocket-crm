@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/authStore'
 import {
   LayoutGrid, Users, Building2, TrendingUp, Columns3,
   FileText, BarChart3,
-  CheckSquare, Mail, Settings, ChevronsLeft,
+  CheckSquare, Mail, Settings, ChevronsLeft, Wallet, Megaphone,
 } from 'lucide-react'
 
 interface Props {
@@ -28,6 +28,8 @@ const allMainNav: NavItem[] = [
   { key: 'tasks', icon: CheckSquare, path: '/tasks' },
   { key: 'invoices', icon: FileText, path: '/invoices', roles: ['admin', 'commercial'] },
   { key: 'email', icon: Mail, path: '/email', roles: ['admin', 'commercial'] },
+  { key: 'campaigns', icon: Megaphone, path: '/campaigns', roles: ['admin', 'commercial'] },
+  { key: 'marketingExpenses', icon: Wallet, path: '/marketing-expenses', roles: ['admin', 'commercial'] },
   { key: 'stats', icon: BarChart3, path: '/stats', roles: ['admin', 'commercial'] },
 ]
 

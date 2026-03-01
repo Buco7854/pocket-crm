@@ -25,6 +25,7 @@ const statusVariant: Record<CampaignStatus, BadgeVariant> = {
   brouillon: 'default',
   en_cours: 'info',
   envoye: 'success',
+  termine: 'default',
 }
 
 export default function EmailCampaignList() {
@@ -51,14 +52,13 @@ export default function EmailCampaignList() {
   const [name, setName] = useState('')
   const [selectedTemplate, setSelectedTemplate] = useState('')
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
-  const [budget, setBudget] = useState('')
   const [contactOptions, setContactOptions] = useState<{ value: string; label: string }[]>([])
   const [loadingContacts, setLoadingContacts] = useState(false)
 
   const fmt = (d: string) => d ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(d)) : '—'
 
   const loadCampaigns = useCallback(() => {
-    const filters: string[] = []
+    const filters: string[] = ['type = "email"']
     if (debouncedSearch) {
       const s = debouncedSearch.replace(/"/g, '\\"')
       filters.push(`name ~ "${s}"`)
@@ -70,7 +70,7 @@ export default function EmailCampaignList() {
       page,
       sort: '-created',
       expand: 'template',
-      filter: filters.length ? filters.join(' && ') : undefined,
+      filter: filters.join(' && '),
     })
   }, [campaignsCollection.fetchList, page, debouncedSearch, filterValues.status])
 
@@ -98,7 +98,6 @@ export default function EmailCampaignList() {
     setName('')
     setSelectedTemplate('')
     setSelectedContacts([])
-    setBudget('')
     setError(null)
     loadContacts()
     setModalOpen(true)
@@ -109,7 +108,6 @@ export default function EmailCampaignList() {
     setName(campaign.name)
     setSelectedTemplate(campaign.template || '')
     setSelectedContacts(campaign.contact_ids || [])
-    setBudget(campaign.budget ? String(campaign.budget) : '')
     setError(null)
     loadContacts()
     setSelected(null)
@@ -127,18 +125,17 @@ export default function EmailCampaignList() {
     setSaving(true)
     setError(null)
     try {
-      const budgetValue = budget.trim() !== '' ? Number(budget) : null
       if (editingCampaign) {
         await pb.collection('campaigns').update(editingCampaign.id, {
           name,
           template: selectedTemplate,
           contact_ids: selectedContacts,
           total: selectedContacts.length,
-          budget: budgetValue,
         })
       } else {
         await pb.collection('campaigns').create({
           name,
+          type: 'email',
           template: selectedTemplate,
           contact_ids: selectedContacts,
           status: 'brouillon',
@@ -146,7 +143,6 @@ export default function EmailCampaignList() {
           sent: 0,
           failed: 0,
           created_by: user?.id,
-          budget: budgetValue,
         })
       }
       setModalOpen(false)
@@ -301,15 +297,6 @@ export default function EmailCampaignList() {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-          />
-
-          <Input
-            label={t('email.budget')}
-            type="number"
-            min={0}
-            value={budget}
-            onChange={(e) => setBudget(e.target.value)}
-            placeholder="0"
           />
 
           <Select

@@ -45,6 +45,9 @@ func main() {
 	// Phase 7 — Analytics & statistics routes
 	hooks.RegisterStatsRoutes(app)
 
+	// Campaign ↔ expense category type validation
+	hooks.RegisterMarketingExpenseHooks(app)
+
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
 	}

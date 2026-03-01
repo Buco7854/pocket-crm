@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/pocketbase/dbx"
@@ -618,31 +619,206 @@ func buildMarketingStats(app core.App) func(*core.RequestEvent) error {
 			clickRate = float64(emailRow.Clicked) / float64(emailRow.Sent) * 100
 		}
 
-		// Cost per lead: total campaign budget (where set) / total leads from email campaigns
-		var totalBudget float64
-		app.DB().NewQuery(`
-			SELECT COALESCE(SUM(budget), 0)
-			FROM campaigns
-			WHERE budget IS NOT NULL AND budget > 0 AND created >= {:start}
-		`).Bind(dbx.Params{"start": start}).Row(&totalBudget) //nolint:errcheck
+		// ── ROI classique par canal ───────────────────────────────────────────
 
-		// Leads generated from email campaigns (leads where source = 'email' in current period)
-		var emailLeads int
+		// Dépenses par canal (marketing_expenses, période courante)
+		type expenseRow struct {
+			Category string  `db:"category"`
+			Cost     float64 `db:"cost"`
+		}
+		expenseRows := make([]expenseRow, 0)
 		app.DB().NewQuery(`
-			SELECT COUNT(*) FROM leads WHERE source = 'email' AND created >= {:start}
-		`).Bind(dbx.Params{"start": start}).Row(&emailLeads) //nolint:errcheck
+			SELECT category, COALESCE(SUM(amount), 0) AS cost
+			FROM marketing_expenses
+			WHERE date >= strftime('%Y-%m-%d', {:start})
+			GROUP BY category
+		`).Bind(dbx.Params{"start": start}).All(&expenseRows) //nolint:errcheck
 
-		costPerLead := ""
-		if totalBudget > 0 && emailLeads > 0 {
-			costPerLead = fmt.Sprintf("%.0f", totalBudget/float64(emailLeads))
-		} else if totalBudget > 0 {
-			costPerLead = fmt.Sprintf("%.0f", totalBudget)
+		// Leads totaux par source (tous statuts, période courante)
+		type leadSourceRow struct {
+			Source string `db:"source"`
+			Total  int    `db:"total"`
+		}
+		leadSourceRows := make([]leadSourceRow, 0)
+		app.DB().NewQuery(`
+			SELECT COALESCE(source, 'autre') AS source, COUNT(*) AS total
+			FROM leads
+			WHERE created >= {:start}
+			GROUP BY source
+		`).Bind(dbx.Params{"start": start}).All(&leadSourceRows) //nolint:errcheck
+
+		// Deals gagnés + revenue par source (période courante)
+		type revenueRow struct {
+			Source  string  `db:"source"`
+			Revenue float64 `db:"revenue"`
+			Deals   int     `db:"deals"`
+		}
+		revenueRows := make([]revenueRow, 0)
+		app.DB().NewQuery(`
+			SELECT COALESCE(source, 'autre') AS source,
+			       COALESCE(SUM(value), 0)   AS revenue,
+			       COUNT(*)                  AS deals
+			FROM leads
+			WHERE status = 'gagne' AND closed_at >= {:start}
+			GROUP BY source
+		`).Bind(dbx.Params{"start": start}).All(&revenueRows) //nolint:errcheck
+
+		// Indexer par source pour merge
+		expenseByCategory := make(map[string]float64, len(expenseRows))
+		for _, r := range expenseRows {
+			expenseByCategory[r.Category] = r.Cost
+		}
+		leadsBySource := make(map[string]int, len(leadSourceRows))
+		for _, r := range leadSourceRows {
+			leadsBySource[r.Source] = r.Total
+		}
+		revenueBySource := make(map[string]revenueRow, len(revenueRows))
+		for _, r := range revenueRows {
+			revenueBySource[r.Source] = r
 		}
 
-		// Email ROI: leads generated per 100 emails sent
-		emailRoi := 0.0
-		if emailRow.Sent > 0 {
-			emailRoi = float64(totalLeads) / float64(emailRow.Sent) * 100
+		// Union de toutes les catégories (dépenses + sources de leads)
+		allCategories := make(map[string]struct{})
+		for _, r := range expenseRows {
+			allCategories[r.Category] = struct{}{}
+		}
+		for _, r := range leadSourceRows {
+			allCategories[r.Source] = struct{}{}
+		}
+
+		// Construire roi_by_channel (tous les canaux avec dépenses OU leads)
+		// Métriques state-of-the-art: ROAS (Revenue/Cost), CPA (Cost/Deal), ROI% pour le graphique
+		type roiChannelRow struct {
+			Category string  `json:"category"`
+			Cost     float64 `json:"cost"`
+			Revenue  float64 `json:"revenue"`
+			Leads    int     `json:"leads"`
+			Deals    int     `json:"deals"`
+			ROI      float64 `json:"roi"`  // pour le graphique barre (% négatif visible)
+			ROAS     float64 `json:"roas"` // Revenue / Cost (ex: 21.5x) — métrique principale
+			CPA      float64 `json:"cpa"`  // Cost / Deals Won — coût par affaire gagnée
+		}
+		roiByChannel := make([]roiChannelRow, 0, len(allCategories))
+		var totalExpenses, totalRevenue float64
+		for cat := range allCategories {
+			cost := expenseByCategory[cat]
+			rev := revenueBySource[cat]
+			leads := leadsBySource[cat]
+			roi, roas, cpa := 0.0, 0.0, 0.0
+			if cost > 0 {
+				roi = (rev.Revenue - cost) / cost * 100
+				roas = rev.Revenue / cost
+				if rev.Deals > 0 {
+					cpa = cost / float64(rev.Deals)
+				}
+			}
+			roiByChannel = append(roiByChannel, roiChannelRow{
+				Category: cat,
+				Cost:     cost,
+				Revenue:  rev.Revenue,
+				Leads:    leads,
+				Deals:    rev.Deals,
+				ROI:      roi,
+				ROAS:     roas,
+				CPA:      cpa,
+			})
+			totalExpenses += cost
+			if cost > 0 {
+				totalRevenue += rev.Revenue
+			}
+		}
+		// Tri: revenue desc, puis category asc pour ordre stable
+		sort.Slice(roiByChannel, func(i, j int) bool {
+			if roiByChannel[i].Revenue != roiByChannel[j].Revenue {
+				return roiByChannel[i].Revenue > roiByChannel[j].Revenue
+			}
+			return roiByChannel[i].Category < roiByChannel[j].Category
+		})
+
+		roiGlobal, roasGlobal := 0.0, 0.0
+		if totalExpenses > 0 {
+			roiGlobal = (totalRevenue - totalExpenses) / totalExpenses * 100
+			roasGlobal = totalRevenue / totalExpenses
+		}
+
+		// ── Cost per lead (global: toutes dépenses / tous leads de la période) ──
+		costPerLead := ""
+		if totalExpenses > 0 && totalLeads > 0 {
+			costPerLead = fmt.Sprintf("%.0f", totalExpenses/float64(totalLeads))
+		}
+
+		// ── Performance par campagne (filtrée par période — dépenses ET revenus) ──
+		// leads_count  = leads créés dans la période liés à la campagne
+		// revenue_won  = revenus des deals clos dans la période liés à la campagne
+		// cost         = dépenses de la campagne dans la période
+		// → tout est aligné sur la même fenêtre temporelle
+		type campaignPerfRow struct {
+			CampaignID   string  `db:"campaign_id"`
+			CampaignName string  `db:"campaign_name"`
+			CampaignType string  `db:"campaign_type"`
+			EmailsSent   int     `db:"emails_sent"`
+			LeadsCount   int     `db:"leads_count"`
+			RevenueWon   float64 `db:"revenue_won"`
+			DealsWon     int     `db:"deals_won"`
+			Cost         float64 `db:"cost"`
+		}
+		campaignPerfRows := make([]campaignPerfRow, 0)
+		app.DB().NewQuery(`
+			SELECT c.id AS campaign_id, c.name AS campaign_name, c.type AS campaign_type,
+			       COALESCE(c.sent, 0) AS emails_sent,
+			       COUNT(DISTINCT CASE WHEN l.created >= {:start} THEN l.id END) AS leads_count,
+			       COALESCE(SUM(CASE WHEN l.status = 'gagne' AND l.closed_at >= {:start} THEN l.value ELSE 0 END), 0) AS revenue_won,
+			       COALESCE(SUM(CASE WHEN l.status = 'gagne' AND l.closed_at >= {:start} THEN 1 ELSE 0 END), 0) AS deals_won,
+			       COALESCE(exp.cost, 0) AS cost
+			FROM campaigns c
+			LEFT JOIN leads l ON l.campaign_id = c.id
+			LEFT JOIN (
+			    SELECT campaign_id, SUM(amount) AS cost
+			    FROM marketing_expenses
+			    WHERE date >= strftime('%Y-%m-%d', {:start}) AND campaign_id != ''
+			    GROUP BY campaign_id
+			) exp ON exp.campaign_id = c.id
+			WHERE c.status IN ('en_cours', 'envoye', 'termine')
+			GROUP BY c.id
+			ORDER BY revenue_won DESC
+		`).Bind(dbx.Params{"start": start}).All(&campaignPerfRows) //nolint:errcheck
+
+		type campaignPerfResult struct {
+			CampaignID   string  `json:"campaign_id"`
+			CampaignName string  `json:"campaign_name"`
+			CampaignType string  `json:"campaign_type"`
+			EmailsSent   int     `json:"emails_sent"`
+			LeadsCount   int     `json:"leads_count"`
+			RevenueWon   float64 `json:"revenue_won"`
+			DealsWon     int     `json:"deals_won"`
+			Cost         float64 `json:"cost"`
+			ROI          float64 `json:"roi"`
+			ROAS         float64 `json:"roas"`
+			CPA          float64 `json:"cpa"`
+		}
+		byCampaign := make([]campaignPerfResult, len(campaignPerfRows))
+		for i, r := range campaignPerfRows {
+			roi, roas, cpa := 0.0, 0.0, 0.0
+			if r.Cost > 0 {
+				roi = (r.RevenueWon - r.Cost) / r.Cost * 100
+				roas = r.RevenueWon / r.Cost
+				if r.DealsWon > 0 {
+					cpa = r.Cost / float64(r.DealsWon)
+				}
+			}
+			byCampaign[i] = campaignPerfResult{
+				CampaignID:   r.CampaignID,
+				CampaignName: r.CampaignName,
+				CampaignType: r.CampaignType,
+				EmailsSent:   r.EmailsSent,
+				LeadsCount:   r.LeadsCount,
+				RevenueWon:   r.RevenueWon,
+				DealsWon:     r.DealsWon,
+				Cost:         r.Cost,
+				ROI:          roi,
+				ROAS:         roas,
+				CPA:          cpa,
+			}
 		}
 
 		return e.JSON(http.StatusOK, map[string]interface{}{
@@ -655,9 +831,13 @@ func buildMarketingStats(app core.App) func(*core.RequestEvent) error {
 				"open_rate":  fmt.Sprintf("%.1f", openRate),
 				"click_rate": fmt.Sprintf("%.1f", clickRate),
 			},
-			"cost_per_lead":  costPerLead,
-			"email_roi":      fmt.Sprintf("%.1f", emailRoi),
-			"has_budget":     totalBudget > 0,
+			"cost_per_lead":   costPerLead,
+			"has_expenses":    totalExpenses > 0,
+			"total_expenses":  totalExpenses,
+			"roi_global":      roiGlobal,
+			"roas_global":     roasGlobal,
+			"roi_by_channel":  roiByChannel,
+			"by_campaign":    byCampaign,
 		})
 	}
 }

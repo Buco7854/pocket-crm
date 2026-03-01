@@ -49,6 +49,18 @@ export default function LeadList({ leads, loading, sortBy, sortDir, onSort, onRo
       key: 'company', labelKey: 'fields.company',
       render: (_val, row) => (row as any).expand?.company?.name || '—',
     },
+    {
+      key: 'created', labelKey: 'fields.createdAt', sortable: true,
+      render: (val) => fmtDate(val as string),
+    },
+    {
+      key: 'updated', labelKey: 'fields.updatedAt', sortable: true,
+      render: (val) => fmtDate(val as string),
+    },
+    {
+      key: 'closed_at', labelKey: 'fields.closedAt', sortable: true,
+      render: (val) => fmtDate(val as string),
+    },
   ]
 
   return (

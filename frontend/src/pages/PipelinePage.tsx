@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { useLeads } from '@/hooks/useLeads'
 import { useCollection } from '@/hooks/useCollection'
 import { useDeleteConfirm } from '@/hooks/useDeleteConfirm'
@@ -117,15 +117,33 @@ export default function PipelinePage() {
         />
       </Modal>
 
-      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.title} size="lg">
+      <Modal
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title={selected?.title}
+        size="lg"
+        footer={
+          <div className="flex justify-between w-full">
+            <div>
+              {isAdmin && selected && (
+                <Button variant="danger" icon={<Trash2 className="h-4 w-4" strokeWidth={1.75} />} onClick={openDelete}>
+                  {t('common.delete')}
+                </Button>
+              )}
+            </div>
+            {selected && (isAdmin || selected.owner === user?.id) && (
+              <Button icon={<Pencil className="h-4 w-4" strokeWidth={1.75} />} onClick={openEdit}>
+                {t('common.edit')}
+              </Button>
+            )}
+          </div>
+        }
+      >
         {selected && (
           <LeadDetail
             lead={selected}
-            onEdit={openEdit}
-            onDelete={openDelete}
             onStatusChange={handleDetailStatusChange}
             canEdit={isAdmin || selected.owner === user?.id}
-            canDelete={isAdmin}
           />
         )}
       </Modal>

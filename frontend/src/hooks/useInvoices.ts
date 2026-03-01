@@ -5,16 +5,17 @@ import type { Invoice, InvoiceStatus } from '@/types/models'
 export function useInvoices() {
   const collection = useCollection<Invoice>('invoices')
 
-  const fetchInvoices = useCallback((params?: { page?: number; search?: string; statusFilter?: string }) => {
+  const fetchInvoices = useCallback((params?: { page?: number; search?: string; statusFilter?: string; sort?: string; sortDir?: 'asc' | 'desc' }) => {
     const filters: string[] = []
     if (params?.search) {
       const s = params.search.replace(/"/g, '\\"')
       filters.push(`(number ~ "${s}" || notes ~ "${s}")`)
     }
     if (params?.statusFilter) filters.push(`status = "${params.statusFilter}"`)
+    const sort = params?.sort ? `${params.sortDir === 'desc' ? '-' : ''}${params.sort}` : '-issued_at'
     return collection.fetchList({
       page: params?.page,
-      sort: '-issued_at',
+      sort,
       filter: filters.length ? filters.join(' && ') : undefined,
       expand: 'contact,company,owner',
     })

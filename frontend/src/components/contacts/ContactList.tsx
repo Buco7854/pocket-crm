@@ -18,7 +18,8 @@ interface Props {
 }
 
 export default function ContactList({ contacts, loading, sortBy, sortDir, onSort, onRowClick }: Props) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const fmtDate = (d: string) => d ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(d)) : '—'
 
   const columns: TableColumn<Contact>[] = [
     {
@@ -42,6 +43,10 @@ export default function ContactList({ contacts, loading, sortBy, sortDir, onSort
           </div>
         ) : null
       },
+    },
+    {
+      key: 'created', labelKey: 'fields.createdAt', sortable: true,
+      render: (val) => fmtDate(val as string),
     },
   ]
 

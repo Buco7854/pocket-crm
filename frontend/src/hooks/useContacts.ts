@@ -5,7 +5,7 @@ import type { Contact } from '@/types/models'
 export function useContacts() {
   const collection = useCollection<Contact>('contacts')
 
-  const fetchContacts = useCallback((params?: { page?: number; search?: string; tagFilter?: string[]; companyFilter?: string }) => {
+  const fetchContacts = useCallback((params?: { page?: number; search?: string; tagFilter?: string[]; companyFilter?: string; sort?: string; sortDir?: 'asc' | 'desc' }) => {
     const filters: string[] = []
     if (params?.search) {
       const s = params.search.replace(/"/g, '\\"')
@@ -17,8 +17,10 @@ export function useContacts() {
       }
     }
     if (params?.companyFilter) filters.push(`company = "${params.companyFilter}"`)
+    const sort = params?.sort ? `${params.sortDir === 'desc' ? '-' : ''}${params.sort}` : 'last_name'
     return collection.fetchList({
       page: params?.page,
+      sort,
       filter: filters.length ? filters.join(' && ') : undefined,
       expand: 'company,owner',
     })

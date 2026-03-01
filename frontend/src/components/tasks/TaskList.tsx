@@ -50,6 +50,10 @@ export default function TaskList({ tasks, loading, sortBy, sortDir, onSort, onRo
       key: 'assignee', labelKey: 'fields.assignee',
       render: (_val, row) => (row as any).expand?.assignee?.name || '—',
     },
+    {
+      key: 'created', labelKey: 'fields.createdAt', sortable: true,
+      render: (val) => fmtDate(val as string),
+    },
   ]
 
   return (

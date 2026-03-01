@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next'
-import { Pencil, Trash2, Globe, Mail, Phone, MapPin } from 'lucide-react'
+import { Globe, Mail, Phone, MapPin } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
-import Button from '@/components/ui/Button'
 import type { Company, CompanySize } from '@/types/models'
 import type { BadgeVariant } from '@/components/ui/Badge'
 
@@ -11,13 +10,9 @@ const sizeVariant: Record<CompanySize, BadgeVariant> = {
 
 interface Props {
   company: Company & { expand?: { owner?: { name: string } } }
-  onEdit: () => void
-  onDelete: () => void
-  canEdit: boolean
-  canDelete: boolean
 }
 
-export default function CompanyDetail({ company, onEdit, onDelete, canEdit, canDelete }: Props) {
+export default function CompanyDetail({ company }: Props) {
   const { t, i18n } = useTranslation()
 
   const fmt = (date: string) => date ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(date)) : '—'
@@ -25,17 +20,11 @@ export default function CompanyDetail({ company, onEdit, onDelete, canEdit, canD
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-surface-900">{company.name}</h2>
-          <div className="flex items-center gap-2 mt-1">
-            {company.industry && <span className="text-sm text-surface-500">{company.industry}</span>}
-            {company.size && <Badge variant={sizeVariant[company.size]}>{t(`companySize.${company.size}`)}</Badge>}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap shrink-0">
-          {canEdit && <Button variant="secondary" size="sm" icon={<Pencil className="h-3.5 w-3.5" />} onClick={onEdit}>{t('common.edit')}</Button>}
-          {canDelete && <Button variant="danger" size="sm" icon={<Trash2 className="h-3.5 w-3.5" />} onClick={onDelete}>{t('common.delete')}</Button>}
+      <div>
+        <h2 className="text-xl font-semibold text-surface-900">{company.name}</h2>
+        <div className="flex items-center gap-2 mt-1">
+          {company.industry && <span className="text-sm text-surface-500">{company.industry}</span>}
+          {company.size && <Badge variant={sizeVariant[company.size]}>{t(`companySize.${company.size}`)}</Badge>}
         </div>
       </div>
 

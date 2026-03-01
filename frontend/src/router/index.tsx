@@ -18,6 +18,8 @@ const InvoicesPage = lazy(() => import('@/pages/InvoicesPage'))
 const EmailPage = lazy(() => import('@/pages/EmailPage'))
 const StatsPage = lazy(() => import('@/pages/StatsPage'))
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'))
+const MarketingExpensesPage = lazy(() => import('@/pages/MarketingExpensesPage'))
+const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'))
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
@@ -97,7 +99,16 @@ export const router = createBrowserRouter([
         element: <RequireRole roles={['admin', 'commercial']}><Outlet /></RequireRole>,
         children: [
           { index: true, element: <Navigate to="templates" replace /> },
+          { path: 'campaigns', element: <Navigate to="/campaigns/email" replace /> },
           { path: ':tab', element: <S><EmailPage /></S> },
+        ],
+      },
+      {
+        path: '/campaigns',
+        element: <RequireRole roles={['admin', 'commercial']}><Outlet /></RequireRole>,
+        children: [
+          { index: true, element: <Navigate to="email" replace /> },
+          { path: ':tab', element: <S><CampaignsPage /></S> },
         ],
       },
       {
@@ -107,6 +118,14 @@ export const router = createBrowserRouter([
           { index: true, element: <Navigate to="sales" replace /> },
           { path: ':tab', element: <S><StatsPage /></S> },
         ],
+      },
+      {
+        path: '/marketing-expenses',
+        element: (
+          <RequireRole roles={['admin', 'commercial']}>
+            <S><MarketingExpensesPage /></S>
+          </RequireRole>
+        ),
       },
       { path: '/settings', element: <S><SettingsPage /></S> },
     ],

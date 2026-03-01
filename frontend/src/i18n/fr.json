@@ -13,6 +13,8 @@
     "invoices": "Factures",
     "email": "Email",
     "stats": "Statistiques",
+    "marketingExpenses": "Dépenses marketing",
+    "campaigns": "Campagnes",
     "settings": "Paramètres"
   },
   "invoiceStatus": {
@@ -170,7 +172,8 @@
     "subject": "Objet",
     "body": "Corps",
     "active": "Actif",
-    "role": "Rôle"
+    "role": "Rôle",
+    "campaignOrigin": "Campagne d'origine"
   },
   "status": {
     "nouveau": "Nouveau",
@@ -272,7 +275,6 @@
     "bodyPlaceholder": "<p>Bonjour {{first_name}},</p><p>...</p>",
     "smtpNotConfigured": "SMTP non configuré. Configurez-le dans l'admin PocketBase → Paramètres → Mail pour activer l'envoi d'emails.",
     "campaignName": "Nom de la campagne",
-    "budget": "Budget (€)",
     "saveDraft": "Enregistrer en brouillon",
     "draftSaved": "Campagne enregistrée en brouillon.",
     "sendNow": "Envoyer maintenant",
@@ -289,7 +291,21 @@
   "campaignStatus": {
     "brouillon": "Brouillon",
     "en_cours": "En cours",
-    "envoye": "Envoyée"
+    "envoye": "Envoyée",
+    "termine": "Terminée"
+  },
+  "campaignType": {
+    "email": "Email",
+    "ads": "Publicité",
+    "social": "Réseaux sociaux",
+    "event": "Événement",
+    "seo": "SEO",
+    "autre": "Autre"
+  },
+  "campaign": {
+    "type": "Type de campagne",
+    "add": "Ajouter une campagne",
+    "edit": "Modifier la campagne"
   },
   "activityType": {
     "creation": "Création",
@@ -404,13 +420,48 @@
       "sources": "Sources de leads",
       "emailStats": "Performances email",
       "costPerLead": "Coût par lead",
-      "emailRoi": "Leads pour 100 emails",
-      "noBudget": "Aucune campagne avec budget"
+      "noBudget": "Aucune dépense enregistrée",
+      "roiGlobal": "ROI marketing global",
+      "roasGlobal": "ROAS global",
+      "totalExpenses": "Dépenses marketing",
+      "noExpenses": "Aucune dépense enregistrée",
+      "roiByChannel": "ROI par canal",
+      "channel": "Canal",
+      "cost": "Coût",
+      "revenue": "Revenu généré",
+      "leads": "Leads",
+      "roi": "ROI",
+      "roas": "ROAS",
+      "cpa": "Coût/Affaire",
+      "byCampaign": "Performance par campagne",
+      "dealsWon": "Deals gagnés",
+      "noCampaigns": "Aucune campagne active pour la période"
     },
     "dashboard": {
       "revenueGoal": "Objectif CA",
       "revenueGoalHint": "vs période précédente",
       "goalAchieved": "Objectif atteint"
     }
+  },
+  "marketingExpenses": {
+    "title": "Dépenses marketing",
+    "description": "Suivez vos coûts d'acquisition par canal pour calculer le ROI réel",
+    "addExpense": "Ajouter une dépense",
+    "editExpense": "Modifier la dépense",
+    "manage": "Gérer les dépenses",
+    "date": "Date",
+    "amount": "Montant (€)",
+    "category": "Canal / Catégorie",
+    "description": "Description",
+    "descriptionPlaceholder": "Ex. : Campagne emailing avril, Salon de Lyon…",
+    "campaign": "Campagne associée",
+    "tabExpenses": "Dépenses",
+    "tabCampaigns": "Campagnes",
+    "emptyCampaigns": "Aucune campagne marketing enregistrée",
+    "empty": "Aucune dépense marketing enregistrée"
+  },
+  "campaigns": {
+    "description": "Gérez toutes vos campagnes marketing en un seul endroit.",
+    "otherTypes": "Autres campagnes"
   }
 }

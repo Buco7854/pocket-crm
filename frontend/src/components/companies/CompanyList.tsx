@@ -18,7 +18,8 @@ interface Props {
 }
 
 export default function CompanyList({ companies, loading, sortBy, sortDir, onSort, onRowClick }: Props) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const fmtDate = (d: string) => d ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(d)) : '—'
 
   const columns: TableColumn<Company>[] = [
     { key: 'name', labelKey: 'fields.name', sortable: true },
@@ -30,6 +31,10 @@ export default function CompanyList({ companies, loading, sortBy, sortDir, onSor
     { key: 'city', labelKey: 'fields.city', sortable: true },
     { key: 'email', labelKey: 'fields.email' },
     { key: 'phone', labelKey: 'fields.phone' },
+    {
+      key: 'created', labelKey: 'fields.createdAt', sortable: true,
+      render: (val) => fmtDate(val as string),
+    },
   ]
 
   return (

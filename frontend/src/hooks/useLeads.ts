@@ -6,7 +6,7 @@ import type { Lead } from '@/types/models'
 export function useLeads() {
   const collection = useCollection<Lead>('leads')
 
-  const fetchLeads = useCallback((params?: { page?: number; search?: string; statusFilter?: string; priorityFilter?: string; sourceFilter?: string }) => {
+  const fetchLeads = useCallback((params?: { page?: number; search?: string; statusFilter?: string; priorityFilter?: string; sourceFilter?: string; sort?: string; sortDir?: 'asc' | 'desc' }) => {
     const filters: string[] = []
     if (params?.search) {
       const s = params.search.replace(/"/g, '\\"')
@@ -15,8 +15,10 @@ export function useLeads() {
     if (params?.statusFilter) filters.push(`status = "${params.statusFilter}"`)
     if (params?.priorityFilter) filters.push(`priority = "${params.priorityFilter}"`)
     if (params?.sourceFilter) filters.push(`source = "${params.sourceFilter}"`)
+    const sort = params?.sort ? `${params.sortDir === 'desc' ? '-' : ''}${params.sort}` : '-created'
     return collection.fetchList({
       page: params?.page,
+      sort,
       filter: filters.length ? filters.join(' && ') : undefined,
       expand: 'contact,company,owner',
     })

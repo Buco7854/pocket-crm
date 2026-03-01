@@ -68,6 +68,10 @@ export default function InvoiceList({ invoices, loading, sortBy, sortDir, onSort
       labelKey: 'fields.owner',
       render: (_val, row) => (row as any).expand?.owner?.name || '—',
     },
+    {
+      key: 'created', labelKey: 'fields.createdAt', sortable: true,
+      render: (val) => fmtDate(val as string),
+    },
   ]
 
   return (

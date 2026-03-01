@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { useLeads } from '@/hooks/useLeads'
 import { useCollection } from '@/hooks/useCollection'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -58,8 +58,8 @@ export default function LeadsPage() {
   }, [])
 
   const load = useCallback(() => {
-    fetchLeads({ page, search: debouncedSearch, statusFilter: filterValues.status || undefined, priorityFilter: filterValues.priority || undefined, sourceFilter: filterValues.source || undefined })
-  }, [fetchLeads, page, debouncedSearch, filterValues.status, filterValues.priority, filterValues.source])
+    fetchLeads({ page, search: debouncedSearch, statusFilter: filterValues.status || undefined, priorityFilter: filterValues.priority || undefined, sourceFilter: filterValues.source || undefined, sort: sortBy, sortDir })
+  }, [fetchLeads, page, debouncedSearch, filterValues.status, filterValues.priority, filterValues.source, sortBy, sortDir])
 
   useEffect(() => { load() }, [load])
 
@@ -131,15 +131,33 @@ export default function LeadsPage() {
         <LeadForm lead={editing} contacts={contactOptions} companies={companyOptions} loading={formLoading} onSubmit={handleSubmit} onCancel={() => { setFormOpen(false); setEditing(null) }} />
       </Modal>
 
-      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.title} size="lg">
+      <Modal
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title={selected?.title}
+        size="lg"
+        footer={
+          <div className="flex justify-between w-full">
+            <div>
+              {isAdmin && selected && (
+                <Button variant="danger" icon={<Trash2 className="h-4 w-4" strokeWidth={1.75} />} onClick={openDelete}>
+                  {t('common.delete')}
+                </Button>
+              )}
+            </div>
+            {selected && (isAdmin || selected.owner === user?.id) && (
+              <Button icon={<Pencil className="h-4 w-4" strokeWidth={1.75} />} onClick={openEdit}>
+                {t('common.edit')}
+              </Button>
+            )}
+          </div>
+        }
+      >
         {selected && (
           <LeadDetail
             lead={selected}
-            onEdit={openEdit}
-            onDelete={openDelete}
             onStatusChange={handleStatusChange}
             canEdit={isAdmin || selected.owner === user?.id}
-            canDelete={isAdmin}
           />
         )}
       </Modal>

@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FileText, Send, Clock, BarChart2 } from 'lucide-react'
+import { FileText, Clock, BarChart2 } from 'lucide-react'
 import { useEmailLogs } from '@/hooks/useEmailLogs'
 import EmailTemplateEditor from '@/components/email/EmailTemplateEditor'
-import EmailCampaignList from '@/components/email/EmailCampaignList'
 import EmailStats from '@/components/email/EmailStats'
 import Alert from '@/components/ui/Alert'
 import Badge from '@/components/ui/Badge'
@@ -15,7 +14,7 @@ import Pagination from '@/components/ui/Pagination'
 import pb from '@/lib/pocketbase'
 import type { EmailLog, EmailLogStatus } from '@/types/models'
 
-type Tab = 'templates' | 'campaigns' | 'history' | 'stats'
+type Tab = 'templates' | 'history' | 'stats'
 
 const statusVariant: Record<EmailLogStatus, string> = {
   envoye: 'success',
@@ -59,7 +58,6 @@ export default function EmailPage() {
 
   const tabs: TabItem<Tab>[] = [
     { key: 'templates', label: t('email.tabs.templates'), icon: <FileText className="h-4 w-4" strokeWidth={1.75} /> },
-    { key: 'campaigns', label: t('email.tabs.campaigns'), icon: <Send className="h-4 w-4" strokeWidth={1.75} /> },
     { key: 'history', label: t('email.tabs.history'), icon: <Clock className="h-4 w-4" strokeWidth={1.75} /> },
     { key: 'stats', label: t('email.tabs.stats'), icon: <BarChart2 className="h-4 w-4" strokeWidth={1.75} /> },
   ]
@@ -116,7 +114,6 @@ export default function EmailPage() {
       <Tabs tabs={tabs} active={activeTab} onChange={(key) => navigate(`/email/${key}`)} />
 
       {activeTab === 'templates' && <EmailTemplateEditor />}
-      {activeTab === 'campaigns' && <EmailCampaignList />}
 
       {activeTab === 'history' && (
         <div className="space-y-4">

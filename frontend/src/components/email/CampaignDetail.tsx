@@ -11,6 +11,7 @@ const statusVariant: Record<CampaignStatus, BadgeVariant> = {
   brouillon: 'default',
   en_cours: 'info',
   envoye: 'success',
+  termine: 'default',
 }
 
 const RUNS_PER_PAGE = 5

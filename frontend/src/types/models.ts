@@ -89,6 +89,7 @@ export interface Lead extends BaseModel {
   expected_close: string
   closed_at: string
   notes: string
+  campaign_id?: string
 }
 
 /** Task types */
@@ -185,11 +186,15 @@ export interface CampaignRun {
   sent_at: string
 }
 
+/** Campaign types */
+export type CampaignType = 'email' | 'ads' | 'social' | 'event' | 'seo' | 'autre'
+
 /** Campaign statuses */
-export type CampaignStatus = 'brouillon' | 'en_cours' | 'envoye'
+export type CampaignStatus = 'brouillon' | 'en_cours' | 'envoye' | 'termine'
 
 export interface Campaign extends BaseModel {
   name: string
+  type: CampaignType
   template: string
   contact_ids: string[]
   status: CampaignStatus
@@ -198,7 +203,6 @@ export interface Campaign extends BaseModel {
   failed: number
   campaign_key: string
   created_by: string
-  budget?: number
 }
 
 /** Activity types */
@@ -218,4 +222,22 @@ export interface Activity extends BaseModel {
   lead: string
   company: string
   metadata: Record<string, unknown>
+}
+
+/** Marketing expense categories — aligned with LeadSource */
+export type MarketingExpenseCategory =
+  | 'email'
+  | 'site_web'
+  | 'salon'
+  | 'telephone'
+  | 'recommandation'
+  | 'autre'
+
+export interface MarketingExpense extends BaseModel {
+  date: string
+  amount: number
+  category: MarketingExpenseCategory
+  description: string
+  campaign_id?: string
+  created_by: string
 }

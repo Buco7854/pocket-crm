@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
+import { Plus, Pencil, Trash2, CheckCircle } from 'lucide-react'
 import { useInvoices } from '@/hooks/useInvoices'
 import { useCollection } from '@/hooks/useCollection'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -60,8 +60,8 @@ export default function InvoicesPage() {
   }, [])
 
   const load = useCallback(() => {
-    fetchInvoices({ page, search: debouncedSearch, statusFilter: filterValues.status || undefined })
-  }, [fetchInvoices, page, debouncedSearch, filterValues.status])
+    fetchInvoices({ page, search: debouncedSearch, statusFilter: filterValues.status || undefined, sort: sortBy, sortDir })
+  }, [fetchInvoices, page, debouncedSearch, filterValues.status, sortBy, sortDir])
 
   useEffect(() => { load() }, [load])
 
@@ -160,16 +160,40 @@ export default function InvoicesPage() {
         />
       </Modal>
 
-      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.number} size="xl">
+      <Modal
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title={selected?.number}
+        size="xl"
+        footer={
+          <div className="flex justify-between w-full">
+            <div>
+              {isAdmin && selected && (
+                <Button variant="danger" icon={<Trash2 className="h-4 w-4" strokeWidth={1.75} />} onClick={openDelete}>
+                  {t('common.delete')}
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {selected && canEdit(selected) && selected.status !== 'payee' && (
+                <Button variant="primary" icon={<CheckCircle className="h-4 w-4" strokeWidth={1.75} />} onClick={handleMarkPaid}>
+                  {t('invoices.markPaid', { defaultValue: 'Marquer payée' })}
+                </Button>
+              )}
+              {selected && canEdit(selected) && (
+                <Button variant="secondary" icon={<Pencil className="h-4 w-4" strokeWidth={1.75} />} onClick={openEdit}>
+                  {t('common.edit')}
+                </Button>
+              )}
+            </div>
+          </div>
+        }
+      >
         {selected && (
           <InvoiceDetail
             invoice={selected}
-            onEdit={openEdit}
-            onDelete={openDelete}
-            onMarkPaid={handleMarkPaid}
             onStatusChange={handleStatusChange}
             canEdit={canEdit(selected)}
-            canDelete={isAdmin}
           />
         )}
       </Modal>
