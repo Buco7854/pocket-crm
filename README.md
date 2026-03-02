@@ -4,9 +4,7 @@
 
 ![CI/CD](https://github.com/Buco7854/pocket-crm/actions/workflows/ci.yml/badge.svg)
 
----
-
-## Stack Technique
+## ⚙️ Stack Technique
 
 | Couche | Technologies |
 |--------|-------------|
@@ -22,9 +20,7 @@
 | **CI/CD** | GitHub Actions |
 | **Tests** | Vitest + Testing Library |
 
----
-
-## Fonctionnalités
+## ✨ Fonctionnalités
 
 - **Contacts** — gestion complète avec tags, relations entreprise/propriétaire
 - **Entreprises** — fiche entreprise, secteur, taille, CA
@@ -38,17 +34,13 @@
 - **i18n** — interface complète en Français et Anglais
 - **Thèmes** — Clair / Sombre / Système
 
----
-
-## Prérequis
+## 📋 Prérequis
 
 - **Docker** ≥ 24 & **Docker Compose** ≥ 2
 - **Node.js** ≥ 20 (pour le développement frontend)
 - **Go** ≥ 1.24 (pour le développement backend)
 
----
-
-## Démarrage rapide
+## 🚀 Démarrage rapide
 
 ### Avec Docker (recommandé)
 
@@ -62,7 +54,7 @@ cp .env.example .env
 # Éditer .env : PB_ADMIN_EMAIL, PB_ADMIN_PASSWORD, SMTP_*, VITE_PB_URL
 
 # 3. Lancer en développement
-docker compose up
+docker compose -f docker-compose.dev.yml up
 
 # Frontend  -> http://localhost:3000
 # Admin PocketBase -> http://localhost:8090/_/
@@ -81,12 +73,10 @@ npm install
 npm run dev
 ```
 
----
-
-## Déploiement production
+## 📦 Déploiement production
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose up -d
 ```
 
 Variables d'environnement requises :
@@ -101,9 +91,7 @@ Variables d'environnement requises :
 | `SMTP_PASSWORD` | Mot de passe SMTP |
 | `PB_URL` | URL publique de l'API PocketBase (injectée à l'exécution dans le conteneur nginx) |
 
----
-
-## Commandes utiles
+## 🛠️ Commandes utiles
 
 ```bash
 # Tests
@@ -119,34 +107,7 @@ cd frontend && npm run build
 cd backend && go build -o pocket-crm .
 ```
 
----
-
-## Structure du projet
-
-```
-pocket-crm/
-├── .github/workflows/ci.yml   # Pipeline CI/CD GitHub Actions
-├── backend/
-│   ├── main.go                # Point d'entrée Go + PocketBase
-│   ├── hooks/                 # Hooks métier (email, leads, tasks, invoices)
-│   ├── services/              # Services réutilisables (email_service.go)
-│   └── pb_migrations/         # Migrations BDD auto-générées
-└── frontend/
-    ├── src/
-    │   ├── components/        # Composants UI + layout + modules métier
-    │   ├── hooks/             # Hooks React (useAuth, useToast, useCollection...)
-    │   ├── pages/             # Pages de l'application
-    │   ├── store/             # Zustand stores (auth)
-    │   ├── i18n/              # Traductions FR / EN
-    │   ├── test/              # Tests Vitest
-    │   └── types/             # Interfaces TypeScript
-    └── public/
-        └── favicon.svg
-```
-
----
-
-## CI/CD
+## 🔄 CI/CD
 
 Le pipeline GitHub Actions (`.github/workflows/ci.yml`) s'exécute sur chaque push :
 
@@ -154,7 +115,6 @@ Le pipeline GitHub Actions (`.github/workflows/ci.yml`) s'exécute sur chaque pu
 2. **Tests** — Vitest (store, composants, pipeline, i18n)
 3. **Build Frontend** — `vite build`
 4. **Build Backend** — `go build`
-5. **Docker Push** — images Docker sur Docker Hub (branche `main` uniquement)
 
 ### Stratégie de branches
 
@@ -165,17 +125,13 @@ Le pipeline GitHub Actions (`.github/workflows/ci.yml`) s'exécute sur chaque pu
 | `feature/*` | Nouvelles fonctionnalités |
 | `fix/*` | Corrections de bugs |
 
----
-
-## Schéma BDD
+## 🗄️ Schéma BDD
 
 Collections PocketBase : `users`, `companies`, `contacts`, `leads`, `tasks`, `invoices`,
 `email_templates`, `email_logs`, `activities`, `campaigns`, `marketing_expenses`.
 
 Voir [PLAN.md](./PLAN.md) pour le détail des champs et règles API.
 
----
+## 📄 Licence
 
-## Licence
-
-Projet d'études — usage non commercial.
+Distribué sous licence [MIT](./LICENSE).
