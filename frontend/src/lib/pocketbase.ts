@@ -1,8 +1,16 @@
 import PocketBase from 'pocketbase'
 
-// In dev, use empty string to route through Vite proxy (avoids CORS).
-// In prod, set VITE_PB_URL to the PocketBase server URL.
-const pb = new PocketBase(import.meta.env.VITE_PB_URL || '/')
+declare global {
+  interface Window {
+    __ENV__?: { PB_URL?: string }
+  }
+}
+
+// In dev:  empty string routes through the Vite proxy (no CORS needed).
+// In prod: window.__ENV__.PB_URL is written by docker-entrypoint.sh at startup.
+const pbUrl = window.__ENV__?.PB_URL || import.meta.env.VITE_PB_URL || '/'
+
+const pb = new PocketBase(pbUrl)
 
 pb.autoCancellation(false)
 

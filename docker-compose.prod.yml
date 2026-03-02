@@ -22,8 +22,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        VITE_PB_URL: ${VITE_PB_URL:-http://localhost:8090}
+    environment:
+      PB_URL: ${PB_URL:-http://localhost:8090}
     ports:
       - "80:80"
     depends_on:

@@ -64,8 +64,6 @@ jobs:
 
       - name: Build
         run: cd frontend && npm run build
-        env:
-          VITE_PB_URL: ${{ vars.VITE_PB_URL || 'http://localhost:8090' }}
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -133,7 +131,5 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/pocket-crm-frontend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/pocket-crm-frontend:${{ github.sha }}
-          build-args: |
-            VITE_PB_URL=${{ vars.VITE_PB_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -99,7 +99,7 @@ Variables d'environnement requises :
 | `SMTP_PORT` | Port SMTP (ex. 587) |
 | `SMTP_USER` | Identifiant SMTP |
 | `SMTP_PASSWORD` | Mot de passe SMTP |
-| `VITE_PB_URL` | URL publique de l'API PocketBase |
+| `PB_URL` | URL publique de l'API PocketBase (injectée à l'exécution dans le conteneur nginx) |
 
 ---
 
