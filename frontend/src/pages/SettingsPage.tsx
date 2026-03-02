@@ -10,6 +10,7 @@ import type { SupportedLocale } from '@/i18n'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
+import Select from '@/components/ui/Select'
 
 type Tab = 'profile' | 'preferences' | 'users'
 
@@ -305,16 +306,14 @@ export default function SettingsPage() {
                       </p>
                       <p className="text-xs text-surface-500 truncate">{u.email}</p>
                     </div>
-                    <select
-                      value={u.role}
-                      disabled={u.id === user?.id}
-                      onChange={(e) => changeRole(u.id, e.target.value as UserRole)}
-                      className="h-8 px-2 rounded-lg border border-surface-200 bg-surface-0 text-xs text-surface-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
-                    >
-                      {ROLES.map((r) => (
-                        <option key={r} value={r}>{t(`roles.${r}`)}</option>
-                      ))}
-                    </select>
+                    <div className="w-36 shrink-0">
+                      <Select
+                        value={u.role}
+                        disabled={u.id === user?.id}
+                        onChange={(v) => changeRole(u.id, v as UserRole)}
+                        options={ROLES.map((r) => ({ value: r, label: t(`roles.${r}`) }))}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>

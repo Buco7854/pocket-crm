@@ -1,256 +1,394 @@
-import { useState, useEffect, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { Search, User, Building2, TrendingUp, ArrowRight } from 'lucide-react'
-import { useDebounce } from '@/hooks/useDebounce'
+import { useTranslation } from 'react-i18next'
+import {
+  Search, X, User, Building2, TrendingUp, CheckSquare, Plus, ArrowRight,
+  Loader2
+} from 'lucide-react'
 import pb from '@/lib/pocketbase'
-import type { Contact, Company, Lead } from '@/types/models'
+import type { Contact, Company, Lead, Task } from '@/types/models'
 
-interface Results {
-  contacts: Contact[]
-  companies: Company[]
-  leads: Lead[]
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type EntityType = 'contact' | 'company' | 'lead' | 'task'
+
+interface SearchResult {
+  id: string
+  type: EntityType
+  primary: string
+  secondary?: string
+  href: string
 }
 
-export default function GlobalSearch() {
+interface Section {
+  type: EntityType
+  icon: React.ElementType
+  labelKey: string
+  pluralKey: string
+  results: SearchResult[]
+  createHref: string
+  createLabelKey: string
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function toResults(type: EntityType, href: string, items: (Contact | Company | Lead | Task)[]): SearchResult[] {
+  return items.map((item) => {
+    if (type === 'contact') {
+      const c = item as Contact
+      return { id: c.id, type, primary: `${c.first_name} ${c.last_name}`.trim(), secondary: c.email || c.position, href: `${href}?open=${c.id}` }
+    }
+    if (type === 'company') {
+      const c = item as Company
+      return { id: c.id, type, primary: c.name, secondary: c.industry || c.city, href: `${href}?open=${c.id}` }
+    }
+    if (type === 'lead') {
+      const l = item as Lead
+      return { id: l.id, type, primary: l.title, secondary: l.value ? `${l.value.toLocaleString()} €` : undefined, href: `${href}?open=${l.id}` }
+    }
+    const t = item as Task
+    return { id: t.id, type, primary: t.title, secondary: t.status, href: `${href}?open=${t.id}` }
+  })
+}
+
+const ENTITY_ICONS: Record<EntityType, React.ElementType> = {
+  contact: User,
+  company: Building2,
+  lead: TrendingUp,
+  task: CheckSquare,
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+interface Props {
+  open: boolean
+  onClose: () => void
+}
+
+const MAX_PER_SECTION = 4
+
+export default function GlobalSearch({ open, onClose }: Props) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<Results | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [open, setOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const debouncedQuery = useDebounce(query, 300)
+  const [query, setQuery] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [sections, setSections] = useState<Section[]>([])
+  const [activeIndex, setActiveIndex] = useState(-1)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Flat list of all navigable items (results + create shortcuts)
+  const allItems = sections.flatMap((s) => [
+    ...s.results.map((r) => ({ href: r.href })),
+  ])
+
+  // Focus input when opened
   useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+    if (open) {
+      setQuery('')
+      setSections([])
+      setActiveIndex(-1)
+      setTimeout(() => inputRef.current?.focus(), 50)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  // Search with debounce
+  const doSearch = useCallback(async (q: string) => {
+    if (!q.trim()) {
+      setSections([])
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const filter = (field: string) => `${field} ~ "${q.replace(/"/g, '')}"`
+
+      const [contacts, companies, leads, tasks] = await Promise.allSettled([
+        pb.collection('contacts').getList<Contact>(1, MAX_PER_SECTION, {
+          filter: `${filter('first_name')} || ${filter('last_name')} || ${filter('email')} || ${filter('position')}`,
+          sort: 'first_name',
+        }),
+        pb.collection('companies').getList<Company>(1, MAX_PER_SECTION, {
+          filter: `${filter('name')} || ${filter('industry')} || ${filter('city')}`,
+          sort: 'name',
+        }),
+        pb.collection('leads').getList<Lead>(1, MAX_PER_SECTION, {
+          filter: filter('title'),
+          sort: '-created',
+        }),
+        pb.collection('tasks').getList<Task>(1, MAX_PER_SECTION, {
+          filter: `${filter('title')} || ${filter('description')}`,
+          sort: '-created',
+        }),
+      ])
+
+      const built: Section[] = [
+        {
+          type: 'contact',
+          icon: User,
+          labelKey: 'entities.contact',
+          pluralKey: 'entities.contacts',
+          results: contacts.status === 'fulfilled' ? toResults('contact', '/contacts', contacts.value.items) : [],
+          createHref: '/contacts',
+          createLabelKey: 'search.createContact',
+        },
+        {
+          type: 'company',
+          icon: Building2,
+          labelKey: 'entities.company',
+          pluralKey: 'entities.companies',
+          results: companies.status === 'fulfilled' ? toResults('company', '/companies', companies.value.items) : [],
+          createHref: '/companies',
+          createLabelKey: 'search.createCompany',
+        },
+        {
+          type: 'lead',
+          icon: TrendingUp,
+          labelKey: 'entities.lead',
+          pluralKey: 'entities.leads',
+          results: leads.status === 'fulfilled' ? toResults('lead', '/leads', leads.value.items) : [],
+          createHref: '/leads',
+          createLabelKey: 'search.createLead',
+        },
+        {
+          type: 'task',
+          icon: CheckSquare,
+          labelKey: 'entities.task',
+          pluralKey: 'entities.tasks',
+          results: tasks.status === 'fulfilled' ? toResults('task', '/tasks', tasks.value.items) : [],
+          createHref: '/tasks',
+          createLabelKey: 'search.createTask',
+        },
+      ].filter((s) => s.results.length > 0) as Section[]
+
+      setSections(built)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => {
-    function handler(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        inputRef.current?.focus()
-        if (results) setOpen(true)
-      }
-      if (e.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [results])
-
-  useEffect(() => {
-    if (!debouncedQuery.trim()) {
-      setResults(null)
-      setOpen(false)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!query.trim()) {
+      setSections([])
+      setLoading(false)
       return
     }
     setLoading(true)
-    const q = debouncedQuery.replace(/"/g, '\\"')
-    Promise.all([
-      pb.collection('contacts').getList(1, 3, {
-        filter: `first_name ~ "${q}" || last_name ~ "${q}" || email ~ "${q}"`,
-        fields: 'id,first_name,last_name,email',
-      }),
-      pb.collection('companies').getList(1, 3, {
-        filter: `name ~ "${q}" || email ~ "${q}" || city ~ "${q}"`,
-        fields: 'id,name,city,industry',
-      }),
-      pb.collection('leads').getList(1, 3, {
-        filter: `title ~ "${q}"`,
-        fields: 'id,title,status,value',
-      }),
-    ])
-      .then(([contacts, companies, leads]) => {
-        setResults({
-          contacts: contacts.items as unknown as Contact[],
-          companies: companies.items as unknown as Company[],
-          leads: leads.items as unknown as Lead[],
-        })
-        setOpen(true)
-      })
-      .catch(() => {
-        setResults({ contacts: [], companies: [], leads: [] })
-        setOpen(true)
-      })
-      .finally(() => setLoading(false))
-  }, [debouncedQuery])
+    debounceRef.current = setTimeout(() => doSearch(query), 280)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [query, doSearch])
 
-  function goToPage(path: string) {
-    setOpen(false)
-    setQuery('')
-    setResults(null)
-    navigate(`${path}?q=${encodeURIComponent(query)}`)
+  // Keyboard navigation
+  useEffect(() => {
+    if (!open) return
+    function handler(e: KeyboardEvent) {
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setActiveIndex((i) => Math.min(i + 1, allItems.length - 1))
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setActiveIndex((i) => Math.max(i - 1, -1))
+      }
+      if (e.key === 'Enter' && activeIndex >= 0 && allItems[activeIndex]) {
+        e.preventDefault()
+        navigate(allItems[activeIndex].href)
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [open, allItems, activeIndex, navigate, onClose])
+
+  // Reset active index when results change
+  useEffect(() => { setActiveIndex(-1) }, [sections])
+
+  function go(href: string) {
+    navigate(href)
+    onClose()
   }
 
-  const hasResults =
-    results && (results.contacts.length > 0 || results.companies.length > 0 || results.leads.length > 0)
+  function goWithQuery(href: string) {
+    navigate(query.trim() ? `${href}?q=${encodeURIComponent(query)}` : href)
+    onClose()
+  }
 
-  return (
-    <div className="relative hidden md:block" ref={containerRef}>
-      <Search
-        className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-400 pointer-events-none"
-        strokeWidth={2}
+  if (!open) return null
+
+  const hasResults = sections.length > 0
+  const showEmpty = !loading && query.trim() && !hasResults
+
+  // Accumulate result index across sections for keyboard highlight
+  let resultOffset = 0
+
+  return createPortal(
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
       />
-      <input
-        ref={inputRef}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onFocus={() => {
-          if (results) setOpen(true)
-        }}
-        type="text"
-        placeholder={t('common.search')}
-        className="h-9 w-64 rounded-lg border border-surface-200 bg-surface-50 pl-10 pr-10 text-sm text-surface-700 placeholder:text-surface-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all dark:bg-surface-100 dark:border-surface-200 dark:text-surface-800"
-      />
-      {!query && (
-        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:inline-flex items-center gap-0.5 rounded border border-surface-200 bg-surface-100 px-1.5 py-0.5 text-[10px] font-medium text-surface-400">
-          ⌘K
-        </kbd>
-      )}
 
-      {open && query.trim() && (
-        <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-surface-200 bg-surface-50 shadow-modal overflow-hidden z-50">
-          {loading && (
-            <div className="px-4 py-3 text-sm text-surface-500">{t('common.loading')}</div>
-          )}
+      {/* Panel */}
+      <div className="fixed inset-x-0 top-[10vh] z-[201] mx-auto max-w-2xl px-4">
+        <div className="rounded-2xl border border-surface-200 bg-surface-0 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.2)] overflow-hidden">
 
-          {!loading && !hasResults && (
-            <div className="px-4 py-3 text-sm text-surface-500">
-              {t('search.noResultsFor', { query: debouncedQuery })}
+          {/* Search input row */}
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-surface-100">
+            {loading
+              ? <Loader2 className="h-5 w-5 text-primary-500 animate-spin shrink-0" strokeWidth={2} />
+              : <Search className="h-5 w-5 text-surface-400 shrink-0" strokeWidth={2} />
+            }
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t('search.placeholder')}
+              className="flex-1 bg-transparent text-base text-surface-900 placeholder:text-surface-400 focus:outline-none"
+            />
+            {query && (
+              <button
+                className="cursor-pointer flex items-center justify-center h-6 w-6 rounded-md text-surface-400 hover:bg-surface-100 hover:text-surface-600 transition-colors"
+                onClick={() => setQuery('')}
+              >
+                <X className="h-4 w-4" strokeWidth={2} />
+              </button>
+            )}
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-surface-200 bg-surface-100 px-1.5 py-0.5 text-[10px] font-medium text-surface-400">
+              ESC
+            </kbd>
+          </div>
+
+          {/* Results */}
+          {hasResults && (
+            <div className="max-h-[60vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+              {sections.map((section) => {
+                const Icon = section.icon
+                const sectionStart = resultOffset
+                resultOffset += section.results.length
+
+                return (
+                  <div key={section.type} className="py-2">
+                    {/* Section header */}
+                    <div className="flex items-center justify-between px-4 pb-1">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-surface-400">
+                        {t(section.pluralKey)}
+                      </span>
+                      <button
+                        className="cursor-pointer flex items-center gap-1 text-[11px] text-primary-500 hover:text-primary-600 font-medium transition-colors"
+                        onClick={() => go(section.createHref)}
+                      >
+                        <Plus className="h-3 w-3" strokeWidth={2.5} />
+                        {t(section.createLabelKey)}
+                      </button>
+                    </div>
+
+                    {/* Results */}
+                    {section.results.map((result, i) => {
+                      const globalIdx = sectionStart + i
+                      const isActive = globalIdx === activeIndex
+                      return (
+                        <button
+                          key={result.id}
+                          className={`cursor-pointer flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                            isActive ? 'bg-primary-500/10' : 'hover:bg-surface-100'
+                          }`}
+                          onClick={() => go(result.href)}
+                          onMouseEnter={() => setActiveIndex(globalIdx)}
+                        >
+                          <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+                            isActive ? 'bg-primary-500/15' : 'bg-surface-100'
+                          }`}>
+                            <Icon className={`h-4 w-4 ${isActive ? 'text-primary-500' : 'text-surface-500'}`} strokeWidth={2} />
+                          </span>
+                          <span className="flex-1 min-w-0">
+                            <span className={`block text-sm font-medium truncate ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-surface-900'}`}>
+                              {result.primary}
+                            </span>
+                            {result.secondary && (
+                              <span className={`block text-xs truncate ${isActive ? 'text-primary-500 dark:text-primary-400' : 'text-surface-500'}`}>
+                                {result.secondary}
+                              </span>
+                            )}
+                          </span>
+                          <ArrowRight className={`h-4 w-4 shrink-0 transition-opacity ${isActive ? 'opacity-100 text-primary-500 dark:text-primary-400' : 'opacity-0'}`} strokeWidth={2} />
+                        </button>
+                      )
+                    })}
+
+                    {/* "See more" link */}
+                    <button
+                      className="cursor-pointer flex w-full items-center gap-1.5 px-4 py-1.5 text-xs text-surface-400 hover:text-primary-500 transition-colors"
+                      onClick={() => goWithQuery(section.createHref)}
+                    >
+                      <ArrowRight className="h-3 w-3" strokeWidth={2} />
+                      {t('search.seeAll', { entity: t(section.pluralKey).toLowerCase() })}
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
 
-          {!loading && hasResults && (
-            <div className="py-1">
-              {/* Contacts */}
-              {results!.contacts.length > 0 && (
-                <section>
-                  <div className="flex items-center gap-1.5 px-3 pt-2 pb-1">
-                    <User className="h-3 w-3 text-surface-400" strokeWidth={2} />
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-surface-400">
-                      {t('entities.contacts')}
-                    </span>
-                  </div>
-                  {results!.contacts.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => goToPage('/contacts')}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-surface-200 transition-colors"
-                    >
-                      <div className="h-7 w-7 rounded-full bg-primary-100 dark:bg-primary-950 text-primary-700 dark:text-primary-300 flex items-center justify-center text-xs font-semibold flex-shrink-0">
-                        {c.first_name?.[0]}{c.last_name?.[0]}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-surface-900 truncate">
-                          {c.first_name} {c.last_name}
-                        </div>
-                        {c.email && (
-                          <div className="text-xs text-surface-500 truncate">{c.email}</div>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => goToPage('/contacts')}
-                    className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-surface-200 transition-colors"
-                  >
-                    <span>{t('search.seeAll', { entity: t('entities.contacts') })}</span>
-                    <ArrowRight className="h-3 w-3" />
-                  </button>
-                </section>
-              )}
-
-              {/* Companies */}
-              {results!.companies.length > 0 && (
-                <section className={results!.contacts.length > 0 ? 'border-t border-surface-200' : ''}>
-                  <div className="flex items-center gap-1.5 px-3 pt-2 pb-1">
-                    <Building2 className="h-3 w-3 text-surface-400" strokeWidth={2} />
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-surface-400">
-                      {t('entities.companies')}
-                    </span>
-                  </div>
-                  {results!.companies.map((co) => (
-                    <button
-                      key={co.id}
-                      onClick={() => goToPage('/companies')}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-surface-200 transition-colors"
-                    >
-                      <div className="h-7 w-7 rounded-lg bg-surface-200 dark:bg-surface-100 flex items-center justify-center flex-shrink-0">
-                        <Building2 className="h-3.5 w-3.5 text-surface-500" strokeWidth={2} />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-surface-900 truncate">{co.name}</div>
-                        {co.city && (
-                          <div className="text-xs text-surface-500 truncate">{co.city}</div>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => goToPage('/companies')}
-                    className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-surface-200 transition-colors"
-                  >
-                    <span>{t('search.seeAll', { entity: t('entities.companies') })}</span>
-                    <ArrowRight className="h-3 w-3" />
-                  </button>
-                </section>
-              )}
-
-              {/* Leads */}
-              {results!.leads.length > 0 && (
-                <section
-                  className={
-                    results!.contacts.length > 0 || results!.companies.length > 0
-                      ? 'border-t border-surface-200'
-                      : ''
-                  }
-                >
-                  <div className="flex items-center gap-1.5 px-3 pt-2 pb-1">
-                    <TrendingUp className="h-3 w-3 text-surface-400" strokeWidth={2} />
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-surface-400">
-                      {t('entities.leads')}
-                    </span>
-                  </div>
-                  {results!.leads.map((l) => (
-                    <button
-                      key={l.id}
-                      onClick={() => goToPage('/leads')}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-surface-200 transition-colors"
-                    >
-                      <div className="h-7 w-7 rounded-lg bg-success-100 dark:bg-success-950/50 flex items-center justify-center flex-shrink-0">
-                        <TrendingUp className="h-3.5 w-3.5 text-success-600 dark:text-success-400" strokeWidth={2} />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-surface-900 truncate">{l.title}</div>
-                        {l.value != null && (
-                          <div className="text-xs text-surface-500 truncate">
-                            {new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(l.value)}
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => goToPage('/leads')}
-                    className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-surface-200 transition-colors"
-                  >
-                    <span>{t('search.seeAll', { entity: t('entities.leads') })}</span>
-                    <ArrowRight className="h-3 w-3" />
-                  </button>
-                </section>
-              )}
+          {/* Empty state */}
+          {showEmpty && (
+            <div className="px-4 py-10 text-center">
+              <Search className="mx-auto h-8 w-8 text-surface-300 mb-2" strokeWidth={1.5} />
+              <p className="text-sm text-surface-500">{t('search.noResults', { query })}</p>
             </div>
           )}
+
+          {/* Default hint (no query) */}
+          {!query && !loading && (
+            <div className="px-4 py-4">
+              <p className="text-xs text-surface-400 mb-3">{t('search.quickAccess')}</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {[
+                  { type: 'contact' as EntityType, href: '/contacts', labelKey: 'entities.contacts' },
+                  { type: 'company' as EntityType, href: '/companies', labelKey: 'entities.companies' },
+                  { type: 'lead' as EntityType, href: '/leads', labelKey: 'entities.leads' },
+                  { type: 'task' as EntityType, href: '/tasks', labelKey: 'entities.tasks' },
+                ].map(({ type, href, labelKey }) => {
+                  const Icon = ENTITY_ICONS[type]
+                  return (
+                    <button
+                      key={type}
+                      className="cursor-pointer flex items-center gap-2 rounded-lg border border-surface-200 px-3 py-2 text-sm text-surface-600 hover:border-primary-500/30 hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400 transition-all"
+                      onClick={() => go(href)}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+                      <span className="truncate">{t(labelKey)}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="flex items-center gap-3 border-t border-surface-100 px-4 py-2">
+            <span className="flex items-center gap-1 text-[10px] text-surface-400">
+              <kbd className="inline-flex items-center rounded border border-surface-200 bg-surface-100 px-1 py-0.5 font-medium">↑↓</kbd>
+              {t('search.navigate')}
+            </span>
+            <span className="flex items-center gap-1 text-[10px] text-surface-400">
+              <kbd className="inline-flex items-center rounded border border-surface-200 bg-surface-100 px-1 py-0.5 font-medium">↵</kbd>
+              {t('search.open')}
+            </span>
+            <span className="flex items-center gap-1 text-[10px] text-surface-400">
+              <kbd className="inline-flex items-center rounded border border-surface-200 bg-surface-100 px-1 py-0.5 font-medium">ESC</kbd>
+              {t('search.close')}
+            </span>
+          </div>
         </div>
-      )}
-    </div>
+      </div>
+    </>,
+    document.body
   )
 }

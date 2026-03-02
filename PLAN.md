@@ -483,7 +483,7 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 - [x] 8.26 — Etats vides i18n
 - [x] 8.27 — Validation formulaires i18n
 - [x] 8.28 — Responsive mobile/tablet/desktop
-- [ ] 8.29 — Raccourcis clavier
+- [x] 8.29 — Raccourcis clavier
 - [x] 8.30 — `SettingsPage.tsx` (profil + gestion users + langue)
 - [x] 8.31 — Persister preference langue localStorage
 - [x] 8.32 — Favicon et titre app

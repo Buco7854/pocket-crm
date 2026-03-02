@@ -3,6 +3,19 @@
     "name": "Pocket CRM",
     "description": "Customer Relationship Management"
   },
+  "search": {
+    "placeholder": "Search contacts, companies, leads…",
+    "noResults": "No results for \"{{query}}\"",
+    "quickAccess": "Quick access",
+    "createContact": "New contact",
+    "createCompany": "New company",
+    "createLead": "New lead",
+    "createTask": "New task",
+    "seeAll": "See more {{entity}}",
+    "navigate": "Navigate",
+    "open": "Open",
+    "close": "Close"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "contacts": "Contacts",
@@ -84,10 +97,6 @@
     "markComplete": "Mark as complete",
     "reopen": "Reopen",
     "nSelected": "{{count}} selected"
-  },
-  "search": {
-    "seeAll": "See more results in {{entity}}",
-    "noResultsFor": "No results for «{{query}}»"
   },
   "entities": {
     "contact": "Contact",

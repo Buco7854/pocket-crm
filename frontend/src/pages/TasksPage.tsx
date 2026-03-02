@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import pb from '@/lib/pocketbase'
 import { useTranslation } from 'react-i18next'
 import { Plus, List, CalendarDays, Bell, Pencil, Trash2, CheckCircle2, RotateCcw } from 'lucide-react'
 import Tabs, { type TabItem } from '@/components/ui/Tabs'
@@ -32,6 +33,7 @@ export default function TasksPage() {
   const { t } = useTranslation()
   const { tab = 'list' } = useParams<{ tab: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const activeTab = tab as TabKey
   const { isAdmin, user } = useAuthStore()
   const { items, totalItems, totalPages, currentPage, loading, error, fetchTasks, create, update, remove } = useTasks()
@@ -39,16 +41,28 @@ export default function TasksPage() {
   const usersCollection = useCollection<User>('users')
   const contactsCollection = useCollection<Contact>('contacts')
   const companiesCollection = useCollection<Company>('companies')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '')
   const [filterValues, setFilterValues] = useState<Record<string, string>>({})
   const [sortBy, setSortBy] = useState('due_date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [page, setPage] = useState(1)
 
+  useEffect(() => {
+    const q = searchParams.get('q') ?? ''
+    setSearch(q)
+    setPage(1)
+  }, [searchParams])
+
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Task | null>(null)
   const [formLoading, setFormLoading] = useState(false)
   const [selected, setSelected] = useState<Task | null>(null)
+
+  useEffect(() => {
+    const openId = searchParams.get('open')
+    if (!openId) return
+    pb.collection('tasks').getOne<Task>(openId).then(setSelected).catch(() => {})
+  }, [])
 
   const [userOptions, setUserOptions] = useState<SelectOption[]>([])
   const [contactOptions, setContactOptions] = useState<SelectOption[]>([])

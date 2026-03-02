@@ -37,10 +37,22 @@ export default function ContactsPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [page, setPage] = useState(1)
 
+  useEffect(() => {
+    const q = searchParams.get('q') ?? ''
+    setSearch(q)
+    setPage(1)
+  }, [searchParams])
+
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Contact | null>(null)
   const [formLoading, setFormLoading] = useState(false)
   const [selected, setSelected] = useState<Contact | null>(null)
+
+  useEffect(() => {
+    const openId = searchParams.get('open')
+    if (!openId) return
+    pb.collection('contacts').getOne<Contact>(openId).then(setSelected).catch(() => {})
+  }, [])
   const [companyOptions, setCompanyOptions] = useState<SelectOption[]>([])
 
   const { items: templates, fetchTemplates } = useEmailTemplates()

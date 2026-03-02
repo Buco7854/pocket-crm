@@ -15,6 +15,7 @@ import Alert from '@/components/ui/Alert'
 import CompanyList from '@/components/companies/CompanyList'
 import CompanyForm from '@/components/companies/CompanyForm'
 import CompanyDetail from '@/components/companies/CompanyDetail'
+import pb from '@/lib/pocketbase'
 import type { Company, CompanySize } from '@/types/models'
 
 const sizes: CompanySize[] = ['tpe', 'pme', 'eti', 'grande_entreprise']
@@ -31,10 +32,22 @@ export default function CompaniesPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [page, setPage] = useState(1)
 
+  useEffect(() => {
+    const q = searchParams.get('q') ?? ''
+    setSearch(q)
+    setPage(1)
+  }, [searchParams])
+
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Company | null>(null)
   const [formLoading, setFormLoading] = useState(false)
   const [selected, setSelected] = useState<Company | null>(null)
+
+  useEffect(() => {
+    const openId = searchParams.get('open')
+    if (!openId) return
+    pb.collection('companies').getOne<Company>(openId).then(setSelected).catch(() => {})
+  }, [])
 
   const deleteConfirm = useDeleteConfirm()
   const debouncedSearch = useDebounce(search, 300)

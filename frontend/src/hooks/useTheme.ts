@@ -29,10 +29,21 @@ export function useTheme() {
     return () => mq.removeEventListener('change', handler)
   }, [theme])
 
+  // Sync theme state across all hook instances in the same tab
+  useEffect(() => {
+    function handler(e: Event) {
+      const mode = (e as CustomEvent<ThemeMode>).detail
+      setThemeState(mode)
+    }
+    window.addEventListener('pocket-crm-theme', handler)
+    return () => window.removeEventListener('pocket-crm-theme', handler)
+  }, [])
+
   const setTheme = useCallback((mode: ThemeMode) => {
     localStorage.setItem(STORAGE_KEY, mode)
     setThemeState(mode)
     applyTheme(mode)
+    window.dispatchEvent(new CustomEvent('pocket-crm-theme', { detail: mode }))
   }, [])
 
   const cycleTheme = useCallback(() => {

@@ -16,6 +16,7 @@ import Alert from '@/components/ui/Alert'
 import LeadList from '@/components/leads/LeadList'
 import LeadForm from '@/components/leads/LeadForm'
 import LeadDetail from '@/components/leads/LeadDetail'
+import pb from '@/lib/pocketbase'
 import type { Lead, LeadStatus, LeadSource, Priority, Contact, Company } from '@/types/models'
 import type { SelectOption } from '@/components/ui/Select'
 
@@ -37,10 +38,22 @@ export default function LeadsPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [page, setPage] = useState(1)
 
+  useEffect(() => {
+    const q = searchParams.get('q') ?? ''
+    setSearch(q)
+    setPage(1)
+  }, [searchParams])
+
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Lead | null>(null)
   const [formLoading, setFormLoading] = useState(false)
   const [selected, setSelected] = useState<Lead | null>(null)
+
+  useEffect(() => {
+    const openId = searchParams.get('open')
+    if (!openId) return
+    pb.collection('leads').getOne<Lead>(openId).then(setSelected).catch(() => {})
+  }, [])
 
   const [contactOptions, setContactOptions] = useState<SelectOption[]>([])
   const [companyOptions, setCompanyOptions] = useState<SelectOption[]>([])
