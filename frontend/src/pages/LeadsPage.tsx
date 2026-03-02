@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { useLeads } from '@/hooks/useLeads'
 import { useCollection } from '@/hooks/useCollection'
@@ -28,8 +29,9 @@ export default function LeadsPage() {
   const { items, totalItems, totalPages, currentPage, loading, error, fetchLeads, create, update, remove, updateLeadStatus } = useLeads()
   const contactsCollection = useCollection<Contact>('contacts')
   const companiesCollection = useCollection<Company>('companies')
+  const [searchParams] = useSearchParams()
 
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '')
   const [filterValues, setFilterValues] = useState<Record<string, string>>({})
   const [sortBy, setSortBy] = useState('created')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')

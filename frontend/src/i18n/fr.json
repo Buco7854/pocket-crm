@@ -118,6 +118,10 @@
     "reopen": "Réouvrir",
     "nSelected": "{{count}} sélectionnés"
   },
+  "search": {
+    "seeAll": "Voir plus de résultats dans {{entity}}",
+    "noResultsFor": "Aucun résultat pour « {{query}} »"
+  },
   "entities": {
     "contact": "Contact",
     "contacts": "Contacts",
