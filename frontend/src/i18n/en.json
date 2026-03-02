@@ -475,5 +475,43 @@
   "contacts": {
     "communicationHistory": "Communication History",
     "noCommunications": "No communications"
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "profile": "Profile",
+      "preferences": "Preferences",
+      "users": "Users"
+    },
+    "profile": {
+      "title": "Personal information",
+      "description": "Update your name and contact details.",
+      "name": "Full name",
+      "phone": "Phone",
+      "email": "Email address",
+      "emailHint": "Email cannot be changed here.",
+      "role": "Role",
+      "saved": "Profile saved successfully.",
+      "saveError": "Error saving profile."
+    },
+    "preferences": {
+      "title": "Appearance & Language",
+      "description": "Customize the interface to your liking.",
+      "theme": "Theme",
+      "language": "Language",
+      "languageHint": "Language preference is saved automatically."
+    },
+    "users": {
+      "title": "User management",
+      "description": "Manage roles and access for team members.",
+      "noUsers": "No users found.",
+      "roleChanged": "Role updated successfully.",
+      "roleChangeError": "Error updating role.",
+      "cannotChangeSelf": "You cannot change your own role here."
+    },
+    "toast": {
+      "saved": "Saved",
+      "error": "Error"
+    }
   }
 }

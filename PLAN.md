@@ -449,47 +449,47 @@ type (creation/modification/email/appel/note/statut_change), description, user -
 ## Phase 8 : Deploiement, CI/CD, Tests & Polish
 
 ### 8A — Docker Production
-- [ ] 8.1 — `frontend/Dockerfile` production multi-stage
-- [ ] 8.2 — `frontend/nginx.conf`
-- [ ] 8.3 — Optimiser `backend/Dockerfile` production
-- [ ] 8.4 — `docker-compose.prod.yml`
-- [ ] 8.5 — Volume Docker nomme pb_data
-- [ ] 8.6 — Injection VITE_PB_URL
+- [x] 8.1 — `frontend/Dockerfile` production multi-stage
+- [x] 8.2 — `frontend/nginx.conf`
+- [x] 8.3 — Optimiser `backend/Dockerfile` production
+- [x] 8.4 — `docker-compose.prod.yml`
+- [x] 8.5 — Volume Docker nomme pb_data
+- [x] 8.6 — Injection VITE_PB_URL
 - [ ] 8.7 — Tester build production
 
 ### 8B — CI/CD Pipeline (15% de la note)
-- [ ] 8.8 — Creer `.github/workflows/ci.yml` : pipeline GitHub Actions
-- [ ] 8.9 — Job lint : ESLint sur le frontend (npm run lint)
-- [ ] 8.10 — Job test : Vitest (npm run test)
-- [ ] 8.11 — Job build : build frontend (npm run build) + build Go backend
-- [ ] 8.12 — Job deploy : deploiement automatique sur push branche main (Docker build + push ou Vercel/autre)
-- [ ] 8.13 — Badges CI/CD dans le README (build status)
-- [ ] 8.14 — Strategie de branches documentee (main = production, develop = pre-production, feature branches)
+- [x] 8.8 — Creer `.github/workflows/ci.yml` : pipeline GitHub Actions
+- [x] 8.9 — Job lint : ESLint sur le frontend (npm run lint)
+- [x] 8.10 — Job test : Vitest (npm run test)
+- [x] 8.11 — Job build : build frontend (npm run build) + build Go backend
+- [x] 8.12 — Job deploy : deploiement automatique sur push branche main (Docker build + push ou Vercel/autre)
+- [x] 8.13 — Badges CI/CD dans le README (build status)
+- [x] 8.14 — Strategie de branches documentee (main = production, develop = pre-production, feature branches)
 
 ### 8C — Tests
-- [ ] 8.15 — Installer vitest, @testing-library/react, jsdom
-- [ ] 8.16 — Configurer Vitest
-- [ ] 8.17 — Tests auth store (Zustand)
-- [ ] 8.18 — Tests composants UI
-- [ ] 8.19 — Tests pipeline
-- [ ] 8.20 — Tests integration
-- [ ] 8.21 — Tests i18n completude
-- [ ] 8.22 — Scripts npm test
-- [ ] 8.23 — Executer tous les tests
+- [x] 8.15 — Installer vitest, @testing-library/react, jsdom
+- [x] 8.16 — Configurer Vitest
+- [x] 8.17 — Tests auth store (Zustand)
+- [x] 8.18 — Tests composants UI
+- [x] 8.19 — Tests pipeline
+- [x] 8.20 — Tests integration
+- [x] 8.21 — Tests i18n completude
+- [x] 8.22 — Scripts npm test
+- [x] 8.23 — Executer tous les tests
 
 ### 8D — Polish UX
-- [ ] 8.24 — Toast notifications i18n
-- [ ] 8.25 — Confirmation suppression i18n
-- [ ] 8.26 — Etats vides i18n
-- [ ] 8.27 — Validation formulaires i18n
-- [ ] 8.28 — Responsive mobile/tablet/desktop
+- [x] 8.24 — Toast notifications i18n
+- [x] 8.25 — Confirmation suppression i18n
+- [x] 8.26 — Etats vides i18n
+- [x] 8.27 — Validation formulaires i18n
+- [x] 8.28 — Responsive mobile/tablet/desktop
 - [ ] 8.29 — Raccourcis clavier
-- [ ] 8.30 — `SettingsPage.tsx` (profil + gestion users + langue)
-- [ ] 8.31 — Persister preference langue localStorage
-- [ ] 8.32 — Favicon et titre app
-- [ ] 8.33 — README.md complet (instructions installation, screenshots, stack, diagrammes)
-- [ ] 8.34 — Revue finale code + securite
-- [ ] 8.35 — Commit
+- [x] 8.30 — `SettingsPage.tsx` (profil + gestion users + langue)
+- [x] 8.31 — Persister preference langue localStorage
+- [x] 8.32 — Favicon et titre app
+- [x] 8.33 — README.md complet (instructions installation, screenshots, stack, diagrammes)
+- [x] 8.34 — Revue finale code + securite
+- [x] 8.35 — Commit
 
 ---
 

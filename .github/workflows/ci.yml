@@ -1,0 +1,139 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main, develop, 'feature/**', 'claude/**' ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # ─── Lint ──────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint (ESLint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: cd frontend && npm ci
+
+      - name: Run ESLint
+        run: cd frontend && npm run lint
+
+  # ─── Tests ─────────────────────────────────────────────────────────────────
+  test:
+    name: Tests (Vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: cd frontend && npm ci
+
+      - name: Run tests
+        run: cd frontend && npm test
+
+  # ─── Build Frontend ────────────────────────────────────────────────────────
+  build-frontend:
+    name: Build Frontend (Vite)
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: cd frontend && npm ci
+
+      - name: Build
+        run: cd frontend && npm run build
+        env:
+          VITE_PB_URL: ${{ vars.VITE_PB_URL || 'http://localhost:8090' }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 7
+
+  # ─── Build Backend ─────────────────────────────────────────────────────────
+  build-backend:
+    name: Build Backend (Go)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache-dependency-path: backend/go.sum
+
+      - name: Build Go binary
+        run: cd backend && go build -ldflags="-s -w" -o pocket-crm .
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-binary
+          path: backend/pocket-crm
+          retention-days: 7
+
+  # ─── Docker Build & Push (main only) ──────────────────────────────────────
+  docker:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: [build-frontend, build-backend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/pocket-crm-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/pocket-crm-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/pocket-crm-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/pocket-crm-frontend:${{ github.sha }}
+          build-args: |
+            VITE_PB_URL=${{ vars.VITE_PB_URL }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
