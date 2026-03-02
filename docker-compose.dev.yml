@@ -1,0 +1,28 @@
+services:
+  pocketbase:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8090"
+    volumes:
+      - pb_data:/pb/pb_data
+      - ./backend/pb_migrations:/pb/pb_migrations
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_PB_URL=http://localhost:8090
+    depends_on:
+      - pocketbase
+
+volumes:
+  pb_data:
