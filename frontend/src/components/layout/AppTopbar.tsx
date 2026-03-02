@@ -5,7 +5,8 @@ import { useAuthStore } from '@/store/authStore'
 import AppBreadcrumb from './AppBreadcrumb'
 import ThemeSwitcher from './ThemeSwitcher'
 import LocaleSwitcher from './LocaleSwitcher'
-import { Menu, Search, Settings, LogOut } from 'lucide-react'
+import GlobalSearch from './GlobalSearch'
+import { Menu, Settings, LogOut } from 'lucide-react'
 
 interface Props {
   sidebarCollapsed: boolean
@@ -16,7 +17,6 @@ export default function AppTopbar({ sidebarCollapsed, onOpenMobileSidebar }: Pro
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { user, userInitials, userRole, logout } = useAuthStore()
-  const [searchQuery, setSearchQuery] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -50,20 +50,7 @@ export default function AppTopbar({ sidebarCollapsed, onOpenMobileSidebar }: Pro
       <AppBreadcrumb className="hidden sm:flex" />
       <div className="flex-1" />
 
-      {/* Search */}
-      <div className="relative hidden md:block">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-400" strokeWidth={2} />
-        <input
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          type="text"
-          placeholder={t('common.search')}
-          className="h-9 w-64 rounded-lg border border-surface-200 bg-surface-50 pl-10 pr-4 text-sm text-surface-700 placeholder:text-surface-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all dark:bg-surface-100 dark:border-surface-200 dark:text-surface-800"
-        />
-        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:inline-flex items-center gap-0.5 rounded border border-surface-200 bg-surface-100 px-1.5 py-0.5 text-[10px] font-medium text-surface-400">
-          ⌘K
-        </kbd>
-      </div>
+      <GlobalSearch />
 
       <ThemeSwitcher />
       <LocaleSwitcher />

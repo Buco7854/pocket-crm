@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, Pencil, Trash2, Send } from 'lucide-react'
 import { useContacts } from '@/hooks/useContacts'
 import { useCollection } from '@/hooks/useCollection'
@@ -28,8 +29,9 @@ export default function ContactsPage() {
   const { isAdmin, isCommercial, user } = useAuthStore()
   const { items, totalItems, totalPages, currentPage, loading, error, fetchContacts, create, update, remove } = useContacts()
   const companiesCollection = useCollection<Company>('companies')
+  const [searchParams] = useSearchParams()
 
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '')
   const [filterValues, setFilterValues] = useState<Record<string, string | string[]>>({})
   const [sortBy, setSortBy] = useState('last_name')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')

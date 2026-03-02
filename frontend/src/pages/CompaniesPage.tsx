@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { useCompanies } from '@/hooks/useCompanies'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -22,8 +23,9 @@ export default function CompaniesPage() {
   const { t } = useTranslation()
   const { isAdmin, isCommercial, user } = useAuthStore()
   const { items, totalItems, totalPages, currentPage, loading, error, fetchCompanies, create, update, remove } = useCompanies()
+  const [searchParams] = useSearchParams()
 
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '')
   const [filterValues, setFilterValues] = useState<Record<string, string>>({})
   const [sortBy, setSortBy] = useState('name')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')

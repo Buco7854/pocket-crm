@@ -85,6 +85,10 @@
     "reopen": "Reopen",
     "nSelected": "{{count}} selected"
   },
+  "search": {
+    "seeAll": "See more results in {{entity}}",
+    "noResultsFor": "No results for «{{query}}»"
+  },
   "entities": {
     "contact": "Contact",
     "contacts": "Contacts",
