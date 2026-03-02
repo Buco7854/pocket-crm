@@ -475,5 +475,43 @@
   "contacts": {
     "communicationHistory": "Historique des communications",
     "noCommunications": "Aucune communication"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "tabs": {
+      "profile": "Profil",
+      "preferences": "Préférences",
+      "users": "Utilisateurs"
+    },
+    "profile": {
+      "title": "Informations personnelles",
+      "description": "Modifiez votre nom et vos coordonnées.",
+      "name": "Nom complet",
+      "phone": "Téléphone",
+      "email": "Adresse email",
+      "emailHint": "L'email ne peut pas être modifié ici.",
+      "role": "Rôle",
+      "saved": "Profil enregistré avec succès.",
+      "saveError": "Erreur lors de l'enregistrement du profil."
+    },
+    "preferences": {
+      "title": "Apparence et langue",
+      "description": "Personnalisez l'interface selon vos préférences.",
+      "theme": "Thème",
+      "language": "Langue",
+      "languageHint": "La langue est sauvegardée automatiquement."
+    },
+    "users": {
+      "title": "Gestion des utilisateurs",
+      "description": "Gérez les rôles et accès des membres de l'équipe.",
+      "noUsers": "Aucun utilisateur trouvé.",
+      "roleChanged": "Rôle mis à jour avec succès.",
+      "roleChangeError": "Erreur lors de la modification du rôle.",
+      "cannotChangeSelf": "Vous ne pouvez pas modifier votre propre rôle ici."
+    },
+    "toast": {
+      "saved": "Enregistré",
+      "error": "Erreur"
+    }
   }
 }

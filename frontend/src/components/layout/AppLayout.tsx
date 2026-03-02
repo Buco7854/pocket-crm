@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import { useTheme } from '@/hooks/useTheme'
 import AppSidebar from './AppSidebar'
 import AppTopbar from './AppTopbar'
+import Toaster from '@/components/ui/Toaster'
 
 export default function AppLayout() {
   // Initialize theme on layout mount
@@ -53,6 +54,9 @@ export default function AppLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Global toast notifications */}
+      <Toaster />
     </div>
   )
 }
