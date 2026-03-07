@@ -124,6 +124,9 @@ func bootstrapFromEnv(app *pocketbase.PocketBase) {
 		if v := os.Getenv("SMTP_SENDER_NAME"); v != "" {
 			s.Meta.SenderName = v
 		}
+		if v := os.Getenv("PB_APP_URL"); v != "" {
+			s.Meta.AppURL = v
+		}
 
 		log.Printf("[init] SMTP configured: %s:%d tls=%v (user=%s)", smtpHost, port, tls, os.Getenv("SMTP_USER"))
 	}
