@@ -306,7 +306,7 @@ func init() {
 		emailLogs.Fields.Add(&core.SelectField{
 			Name:      "status",
 			Required:  true,
-			Values:    []string{"envoye", "echoue", "en_attente"},
+			Values:    []string{"en_attente", "envoye", "echoue", "ouvert", "clique"},
 			MaxSelect: 1,
 		})
 		emailLogs.Fields.Add(&core.DateField{Name: "sent_at"})
