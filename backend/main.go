@@ -109,11 +109,14 @@ func bootstrapFromEnv(app *pocketbase.PocketBase) {
 			port = 587
 		}
 
+		tls := os.Getenv("SMTP_TLS") == "true"
+
 		s.SMTP.Enabled = true
 		s.SMTP.Host = smtpHost
 		s.SMTP.Port = port
 		s.SMTP.Username = os.Getenv("SMTP_USER")
 		s.SMTP.Password = os.Getenv("SMTP_PASSWORD")
+		s.SMTP.TLS = tls
 
 		if v := os.Getenv("SMTP_FROM"); v != "" {
 			s.Meta.SenderAddress = v
@@ -122,7 +125,7 @@ func bootstrapFromEnv(app *pocketbase.PocketBase) {
 			s.Meta.SenderName = v
 		}
 
-		log.Printf("[init] SMTP configured: %s:%d (user=%s)", smtpHost, port, os.Getenv("SMTP_USER"))
+		log.Printf("[init] SMTP configured: %s:%d tls=%v (user=%s)", smtpHost, port, tls, os.Getenv("SMTP_USER"))
 	}
 }
 
