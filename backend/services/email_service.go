@@ -4,11 +4,18 @@ import (
 	"fmt"
 	"log"
 	"net/mail"
+	neturl "net/url"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/mailer"
+)
+
+var (
+	hrefDouble = regexp.MustCompile(`href="[^"]*"`)
+	hrefSingle = regexp.MustCompile(`href='[^']*'`)
 )
 
 // EmailSendParams holds the parameters for sending a single templated email.
@@ -81,7 +88,12 @@ func SendTemplatedEmail(app core.App, params EmailSendParams) error {
 		return fmt.Errorf("failed to create email_log: %w", err)
 	}
 
-	// 5. Inject 1×1 tracking pixel at end of HTML body
+	// 5. Rewrite href links for click tracking (logRec.Id is now known)
+	if params.BaseURL != "" {
+		body = rewriteLinksForTracking(body, params.BaseURL, logRec.Id)
+	}
+
+	// 6. Inject 1×1 tracking pixel at end of HTML body
 	if params.BaseURL != "" {
 		pixel := fmt.Sprintf(
 			`<img src="%s/api/crm/email/track-open/%s" width="1" height="1" style="display:none" alt="" />`,
@@ -91,7 +103,7 @@ func SendTemplatedEmail(app core.App, params EmailSendParams) error {
 		body += "\n" + pixel
 	}
 
-	// 6. Resolve sender info from PocketBase settings
+	// 7. Resolve sender info from PocketBase settings
 	senderAddr := app.Settings().Meta.SenderAddress
 	senderName := app.Settings().Meta.SenderName
 	if senderAddr == "" {
@@ -101,7 +113,7 @@ func SendTemplatedEmail(app core.App, params EmailSendParams) error {
 		senderName = "Pocket CRM"
 	}
 
-	// 7. Build and send message
+	// 8. Build and send message
 	msg := &mailer.Message{
 		From:    mail.Address{Address: senderAddr, Name: senderName},
 		To:      []mail.Address{{Address: params.RecipientEmail, Name: params.RecipientName}},
@@ -111,7 +123,7 @@ func SendTemplatedEmail(app core.App, params EmailSendParams) error {
 
 	sendErr := app.NewMailClient().Send(msg)
 
-	// 8. Update log with result
+	// 9. Update log with result
 	if sendErr != nil {
 		logRec.Set("status", "echoue")
 		logRec.Set("error_message", sendErr.Error())
@@ -128,6 +140,32 @@ func SendTemplatedEmail(app core.App, params EmailSendParams) error {
 	}
 
 	return nil
+}
+
+// rewriteLinksForTracking replaces all http/https href values in the HTML body
+// with tracking redirect URLs so that link clicks can be recorded.
+// Non-http links (mailto:, tel:, #anchor) and already-wrapped URLs are skipped.
+func rewriteLinksForTracking(htmlBody, baseURL, logID string) string {
+	trackPrefix := strings.TrimRight(baseURL, "/") + "/api/crm/email/track-click/" + logID + "?url="
+
+	rewrite := func(match string) string {
+		// match is: href="url" or href='url'
+		// match[5] = quote char, match[6:len-1] = raw URL
+		rawURL := match[6 : len(match)-1]
+		if !strings.HasPrefix(rawURL, "http://") && !strings.HasPrefix(rawURL, "https://") {
+			return match // skip mailto:, tel:, #anchor, etc.
+		}
+		if strings.Contains(rawURL, "/api/crm/email/track-click/") {
+			return match // already wrapped
+		}
+		quote := string(match[5])
+		return "href=" + quote + trackPrefix + neturl.QueryEscape(rawURL) + quote
+	}
+
+	return hrefSingle.ReplaceAllStringFunc(
+		hrefDouble.ReplaceAllStringFunc(htmlBody, rewrite),
+		rewrite,
+	)
 }
 
 // renderVars replaces {{key}} placeholders in tmpl with values from vars.
