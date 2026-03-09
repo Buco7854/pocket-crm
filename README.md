@@ -100,7 +100,7 @@ L'application suit une architecture à 3 couches conteneurisées :
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-**Diagramme Mermaid complet** : voir [`docs/architecture-diagram.mermaid`](./docs/architecture-diagram.mermaid)
+**Diagramme complet** : voir [`docs/architecture-diagram.png`](./docs/architecture-diagram.png)
 
 ### Justification des choix techniques
 
@@ -232,7 +232,7 @@ L'application utilise 12 collections PocketBase (SQLite) :
 | `activities` | Base (hook-only write) | Journal d'activité automatique |
 | `marketing_expenses` | Base | Dépenses marketing par canal |
 
-**Diagramme MCD complet** : voir [`docs/mcd-diagram.mermaid`](./docs/mcd-diagram.mermaid)
+**Diagramme MCD complet** : voir [`docs/mcd-diagram.png`](./docs/mcd-diagram.png)
 
 ### Règles d'accès API
 
@@ -271,7 +271,7 @@ Nouveau (10%) → Contacté (20%) → Qualifié (40%) → Proposition (60%) → 
 - Détection automatique des factures en retard
 - Envoi programmé de campagnes email (scheduler toutes les 60 secondes)
 
-**Diagramme complet** : voir [`docs/workflow-pipeline.mermaid`](./docs/workflow-pipeline.mermaid)
+**Diagramme complet** : voir [`docs/workflow-pipeline.png`](./docs/workflow-pipeline.png)
 
 ---
 
@@ -438,10 +438,10 @@ pocket-crm/
 │   └── publish.yml             # Build & push images Docker → GHCR
 │
 ├── docs/                       # Documentation & diagrammes
-│   ├── architecture-diagram.mermaid
-│   ├── mcd-diagram.mermaid
-│   ├── use-case-diagram.mermaid
-│   └── workflow-pipeline.mermaid
+│   ├── architecture-diagram.png
+│   ├── mcd-diagram.png
+│   ├── use-case-diagram.png
+│   └── workflow-pipeline.png
 │
 ├── backend/
 │   ├── main.go                 # Point d'entrée Go (PocketBase + hooks)
@@ -500,14 +500,14 @@ pocket-crm/
 
 ## Diagrammes
 
-Tous les diagrammes sont au format **Mermaid** (rendable sur GitHub, VS Code, ou [mermaid.live](https://mermaid.live)) :
+Tous les diagrammes sont au format **PNG** :
 
 | Diagramme | Fichier | Description |
 |-----------|---------|-------------|
-| **Cas d'utilisation (UML)** | [`docs/use-case-diagram.mermaid`](./docs/use-case-diagram.mermaid) | Acteurs (Admin, Commercial, Standard) et cas d'utilisation par module |
-| **MCD Merise** | [`docs/mcd-diagram.mermaid`](./docs/mcd-diagram.mermaid) | 12 entités, attributs, relations et cardinalités |
-| **Architecture technique** | [`docs/architecture-diagram.mermaid`](./docs/architecture-diagram.mermaid) | 3 couches (Client, Nginx, Backend Go), flux de données, services externes |
-| **Workflow pipeline** | [`docs/workflow-pipeline.mermaid`](./docs/workflow-pipeline.mermaid) | 7 étapes du pipeline de vente, probabilités, automatisations |
+| **Cas d'utilisation (UML)** | [`docs/use-case-diagram.png`](./docs/use-case-diagram.png) | Acteurs (Admin, Commercial, Standard) et cas d'utilisation par module |
+| **MCD Merise** | [`docs/mcd-diagram.png`](./docs/mcd-diagram.png) | 12 entités, attributs, relations et cardinalités |
+| **Architecture technique** | [`docs/architecture-diagram.png`](./docs/architecture-diagram.png) | 3 couches (Client, Nginx, Backend Go), flux de données, services externes |
+| **Workflow pipeline** | [`docs/workflow-pipeline.png`](./docs/workflow-pipeline.png) | 7 étapes du pipeline de vente, probabilités, automatisations |
 
 ---
 
